@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Mobile App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Mode Colors (Material Design 3) */
+            --primary: #23949f;
+            --primary-container: #b2ebf2;
+            --secondary: #233d4d;
+            --surface: #ffffff;
+            --surface-variant: #f5f5f5;
+            --background: #fafafa;
+            --on-primary: #ffffff;
+            --on-secondary: #ffffff;
+            --on-surface: #1c1b1f;
+            --on-background: #1c1b1f;
+            --outline: #79747e;
+            --shadow: rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            /* Dark Mode Colors */
+            --primary: #4dd0e1;
+            --primary-container: #006874;
+            --secondary: #b2c9d4;
+            --surface: #1c1b1f;
+            --surface-variant: #49454f;
+            --background: #141218;
+            --on-primary: #00363d;
+            --on-secondary: #1e2932;
+            --on-surface: #e6e1e5;
+            --on-background: #e6e1e5;
+            --outline: #938f99;
+            --shadow: rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background);
+            color: var(--on-background);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            background: var(--surface);
+            box-shadow: 0 2px 8px var(--shadow);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background-color 0.3s ease;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle {
+            background: var(--surface-variant);
+            border: none;
+            border-radius: 24px;
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--on-surface);
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--outline);
+            opacity: 0.8;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 80px 0;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-container) 0%, var(--surface) 100%);
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--on-surface);
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--on-surface);
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--on-primary);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .btn-secondary {
+            background: var(--surface-variant);
+            color: var(--on-surface);
+        }
+
+        .btn-secondary:hover {
+            background: var(--outline);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 500;
+            margin-bottom: 48px;
+            color: var(--on-surface);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: var(--primary-container);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--on-surface);
+        }
+
+        .feature-card p {
+            color: var(--on-surface);
+            opacity: 0.7;
+            font-size: 14px;
+        }
+
+        /* Benefits Section */
+        .benefits {
+            padding: 80px 0;
+            background: var(--surface-variant);
+        }
+
+        .benefits-list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .benefit-item {
+            display: flex;
+            gap: 24px;
+            padding: 24px;
+            background: var(--surface);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+
+        .benefit-icon {
+            color: var(--primary);
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .benefit-content h3 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--on-surface);
+        }
+
+        .benefit-content p {
+            color: var(--on-surface);
+            opacity: 0.7;
+            font-size: 14px;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--surface);
+            padding: 32px 0;
+            text-align: center;
+            color: var(--on-surface);
+            opacity: 0.7;
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="material-icons">phone_android</span>
+                    CRM Mobile
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <span class="material-icons" id="theme-icon">dark_mode</span>
+                    <span id="theme-text">Dark Mode</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Your CRM, Now Mobile</h1>
+            <p>Manage your deals, tasks, and contacts on the go with our powerful mobile app</p>
+            <div class="cta-buttons">
+                <a href="/api/docs/" class="btn btn-primary">
+                    <span class="material-icons">api</span>
+                    API Documentation
+                </a>
+                <a href="/api/docs/" class="btn btn-secondary">
+                    <span class="material-icons">description</span>
+                    View API
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">Why Choose Our Mobile App?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">offline_bolt</span>
+                    </div>
+                    <h3>Work Offline</h3>
+                    <p>Full offline support for deals, tasks, and contacts. Sync automatically when you're back online.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">notifications_active</span>
+                    </div>
+                    <h3>Stay Notified</h3>
+                    <p>Push notifications for task reminders, deal updates, and new requests. Customize what you want to hear.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">fingerprint</span>
+                    </div>
+                    <h3>Secure Access</h3>
+                    <p>Biometric authentication with fingerprint or face ID. Fast, secure, and convenient.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">speed</span>
+                    </div>
+                    <h3>Quick Actions</h3>
+                    <p>One-tap calling, emailing, and messaging. Create deals and tasks in seconds.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">camera_alt</span>
+                    </div>
+                    <h3>Camera Integration</h3>
+                    <p>Scan business cards, take photos, and attach files directly from your device.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">location_on</span>
+                    </div>
+                    <h3>Location Features</h3>
+                    <p>View contacts and deals on a map, navigate to client locations, and check in on-site.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="benefits">
+        <div class="container">
+            <h2 class="section-title">Key Benefits</h2>
+            <div class="benefits-list">
+                <div class="benefit-item">
+                    <span class="material-icons benefit-icon">check_circle</span>
+                    <div class="benefit-content">
+                        <h3>Always Available</h3>
+                        <p>Access your CRM data anywhere, anytime. No internet? No problem - work offline and sync later.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <span class="material-icons benefit-icon">check_circle</span>
+                    <div class="benefit-content">
+                        <h3>Modern & Fast</h3>
+                        <p>Built with Flutter and Material Design 3. Beautiful, responsive, and lightning-fast performance.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <span class="material-icons benefit-icon">check_circle</span>
+                    <div class="benefit-content">
+                        <h3>Easy to Use</h3>
+                        <p>Intuitive interface designed for mobile. Quick actions, smart filters, and simple navigation.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <span class="material-icons benefit-icon">check_circle</span>
+                    <div class="benefit-content">
+                        <h3>Fully Integrated</h3>
+                        <p>Seamlessly syncs with your CRM backend. All your data, always up to date.</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <span class="material-icons benefit-icon">check_circle</span>
+                    <div class="benefit-content">
+                        <h3>Privacy First</h3>
+                        <p>Your data stays secure with encrypted storage, biometric locks, and secure API connections.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>Powered by Django CRM API | Built with Flutter</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle
+        function getTheme() {
+            return localStorage.getItem('theme') || 'light';
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            updateThemeIcon(theme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (theme === 'dark') {
+                icon.textContent = 'light_mode';
+                text.textContent = 'Light Mode';
+            } else {
+                icon.textContent = 'dark_mode';
+                text.textContent = 'Dark Mode';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = getTheme();
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            setTheme(newTheme);
+        }
+
+        // Initialize theme on load
+        setTheme(getTheme());
+
+        // Detect system preference
+        if (getTheme() === 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme('dark');
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,11 @@
+# MySQL-specific requirements
+# Install these ONLY if you're using MySQL database (not SQLite)
+# 
+# On macOS: brew install mysql pkg-config
+# On Ubuntu/Debian: sudo apt-get install default-libmysqlclient-dev pkg-config
+# On Fedora: sudo dnf install mysql-devel pkg-config
+#
+# Then install: pip install mysqlclient==2.2.7
+
+mysqlclient==2.2.7
+

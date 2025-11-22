@@ -2,6 +2,9 @@
 # Railway setup script for Django CRM
 # Run with: railway run ./railway_setup.sh
 
+echo "Creating required directories..."
+mkdir -p media/locks staticfiles
+
 echo "Running migrations..."
 python manage.py migrate
 

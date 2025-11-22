@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
 from django.db.utils import ProgrammingError, OperationalError
+from django.db import connection
 
 from common.models import Reminder
 from common.utils.helpers import get_trans_for_user
@@ -35,14 +36,20 @@ class RemindersSender(threading.Thread, SingleInstance):
             # To prevent hitting the db until the apps.ready() is completed.
             time.sleep(1)
 
-            # Wait for database tables to exist (migrations may not have run yet)
+            # Wait for the specific table to exist by checking information_schema (avoids error logs)
             while True:
                 try:
-                    # Try to access Reminders table to check if it exists
-                    Reminders.objects.exists()
-                    break
+                    with connection.cursor() as cursor:
+                        cursor.execute("""
+                            SELECT 1 FROM information_schema.tables 
+                            WHERE table_schema = 'public' AND table_name = 'settings_reminders'
+                        """)
+                        if cursor.fetchone():
+                            # Table exists, break out of wait loop
+                            break
                 except (ProgrammingError, OperationalError):
-                    time.sleep(1)
+                    pass
+                time.sleep(5)  # Check every 5 seconds to reduce log spam
 
             while True:
                 if settings.DEBUG:

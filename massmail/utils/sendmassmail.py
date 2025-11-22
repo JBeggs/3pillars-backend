@@ -25,6 +25,7 @@ from django.utils import timezone
 from django.utils.formats import date_format
 from django.utils.translation import gettext_lazy as _
 from django.db.utils import OperationalError, ProgrammingError
+from django.db import connection
 
 from common.utils.helpers import get_formatted_short_date
 from common.utils.helpers import get_now
@@ -55,12 +56,21 @@ class SendMassmail(threading.Thread, SingleInstance):
         while not apps.ready:
             time.sleep(0.01)  # wait for django to start
         
-        while True: #This will wait for the db to be ready
+        # Wait for the specific table to exist by checking information_schema (avoids error logs)
+        while True:
             try:
-                massmail_settings = MassmailSettings.objects.get(id=1)
-                break
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT 1 FROM information_schema.tables 
+                        WHERE table_schema = 'public' AND table_name = 'settings_massmailsettings'
+                    """)
+                    if cursor.fetchone():
+                        # Table exists, now try to get the settings
+                        massmail_settings = MassmailSettings.objects.get(id=1)
+                        break
             except (OperationalError, ProgrammingError, MassmailSettings.DoesNotExist):
-                time.sleep(1)
+                pass
+            time.sleep(5)  # Check every 5 seconds to reduce log spam
 
         if not settings.MAILING or settings.TESTING:
             return

@@ -18,31 +18,46 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # To get new value of key use code:
 # from django.core.management.utils import get_random_secret_key
 # print(get_random_secret_key())
-SECRET_KEY = 'j1c=6$s-dh#$ywt@(q4cm=j&0c*!0x!e-qm6k1%yoliec(15tn'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'j1c=6$s-dh#$ywt@(q4cm=j&0c*!0x!e-qm6k1%yoliec(15tn')
 
 # Add your hosts to the list.
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.101']
+# Railway provides RAILWAY_PUBLIC_DOMAIN, but we'll use ALLOWED_HOSTS env var
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.1.101').split(',')
 
 # Database
-DATABASES = {
-    'default': {
-        # for SQLite3
-        'ENGINE': 'django.db.backends.sqlite3',
+# Railway automatically provides DATABASE_URL environment variable
+import os
+import dj_database_url
 
-        # for MySQl
-        #'ENGINE': 'django.db.backends.mysql',
-        #'PORT': '3306',
-
-        # for PostgreSQL
-        # "ENGINE": "django.db.backends.postgresql",
-        # 'PORT': '5432',
-
-        'NAME': 'crm_db',
-        'USER': 'crm_user',
-        'PASSWORD': 'crmpass',
-        'HOST': 'localhost',
+if os.environ.get('DATABASE_URL'):
+    # Production (Railway/Heroku/etc.) - use DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # Local development - use SQLite
+    DATABASES = {
+        'default': {
+            # for SQLite3
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'crm_db',
+
+            # for MySQl (uncomment if needed)
+            #'ENGINE': 'django.db.backends.mysql',
+            #'PORT': '3306',
+
+            # for PostgreSQL (uncomment if needed)
+            # "ENGINE": "django.db.backends.postgresql",
+            # 'PORT': '5432',
+
+            'USER': 'crm_user',
+            'PASSWORD': 'crmpass',
+            'HOST': 'localhost',
+        }
+    }
 
 EMAIL_HOST = '<specify host>'   # 'smtp.example.com'
 EMAIL_HOST_PASSWORD = '<specify password>'
@@ -57,7 +72,7 @@ DEFAULT_FROM_EMAIL = 'test@example.com'
 ADMINS = [("<Admin1>", "<admin1_box@example.com>")]   # specify admin
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 FORMS_URLFIELD_ASSUME_HTTPS = True
 
@@ -131,6 +146,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise for static files
     'corsheaders.middleware.CorsMiddleware',  # CORS early, before CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -181,7 +197,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Changed for Railway/WhiteNoise
+
+# WhiteNoise configuration for serving static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'

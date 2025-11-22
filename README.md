@@ -138,6 +138,85 @@ They are captured and organized within the system using a **ticketing mechanism*
 The CRM system includes a **bulk mailing** feature that allows users to send personalized newsletters to their contacts.  
 Customer segmentation features allow you to create targeted email marketing campaigns, and these can be managed directly within the CRM interface.
 
+## REST API
+
+Django-CRM includes a comprehensive **REST API** built with Django REST Framework, enabling integration with mobile apps, third-party services, and custom frontends.
+
+### API Features
+
+- ✅ **JWT Authentication** - Secure token-based authentication for mobile apps
+- ✅ **Full CRUD Operations** - Create, read, update, delete for all CRM entities
+- ✅ **Department-Based Permissions** - Access control based on user groups/departments
+- ✅ **Advanced Filtering & Search** - Filter by multiple fields, search across models
+- ✅ **Pagination** - Efficient handling of large datasets
+- ✅ **API Documentation** - Interactive Swagger/OpenAPI documentation
+- ✅ **File Upload Support** - Attach files to tasks, deals, and chat messages
+
+### Available Endpoints
+
+**Authentication:**
+- `POST /api/auth/login/` - Login and get JWT tokens + user data
+- `POST /api/auth/refresh/` - Refresh access token
+- `GET /api/auth/users/` - List users (excluding admin) for task assignment
+
+**CRM Entities:**
+- `GET/POST /api/companies/` - Companies management
+- `GET/POST /api/contacts/` - Contact persons management
+- `GET/POST /api/deals/` - Deals/opportunities management
+- `POST /api/deals/{id}/change_stage/` - Change deal stage
+- `GET/POST /api/leads/` - Leads management
+- `GET/POST /api/requests/` - Commercial requests
+- `GET /api/products/` - Products catalog (read-only)
+- `GET/POST /api/payments/` - Payment tracking
+
+**Tasks & Projects:**
+- `GET/POST /api/tasks/` - Task management
+- `GET /api/tasks/?assigned_to_me=true` - Filter tasks by assignment
+- `POST /api/tasks/{id}/mark_complete/` - Mark task as complete
+- `GET/POST /api/projects/` - Project management
+- `GET/POST /api/memos/` - Office memos
+
+**Chat & Messaging:**
+- `GET/POST /api/chat/` - Chat messages
+- `GET /api/chat/for_object/` - Messages for specific objects (tasks, deals)
+
+### API Documentation
+
+When the server is running, access interactive API documentation at:
+- **Swagger UI**: `http://localhost:8000/api/docs/`
+- **OpenAPI Schema**: `http://localhost:8000/api/schema/`
+
+### Quick Start with API
+
+```bash
+# Start the server
+python manage.py runserver
+
+# Test login endpoint
+curl -X POST http://localhost:8000/api/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "your_user", "password": "your_pass"}'
+
+# Get companies (with token)
+curl -X GET http://localhost:8000/api/companies/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### Mobile App Integration
+
+The API is designed for mobile app integration (Flutter, React Native, etc.):
+
+- **JWT Tokens** - Secure, stateless authentication
+- **CORS Enabled** - Cross-origin requests for web/mobile apps
+- **RESTful Design** - Standard HTTP methods and status codes
+- **Error Handling** - Detailed error messages for debugging
+- **File Uploads** - Multipart form data support for images/audio
+
+For detailed API documentation, see:
+- [API Setup Guide](../API_SETUP_GUIDE.md) - Complete API setup and integration guide
+- [Backend API Summary](../BACKEND_API_SUMMARY.md) - API implementation details
+- [API Tests](../API_TESTS_SUMMARY.md) - API test suite documentation
+
 ## User Assistance  
 
 - Each CRM page includes a link <img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/site/icons/question-mark.svg" alt="question-mark icon" style="vertical-align: bottom" width="25" height="25"> to a context-aware help page, with content dynamically tailored to the user's role for more relevant guidance.  
@@ -179,6 +258,7 @@ For first-time exploration of the CRM (not for regular use), no database install
 
 - [Installation and Configuration Guide](https://github.com/DjangoCRM/django-crm/blob/main/docs/installation_and_configuration_guide.md)
 - [User Guide](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_user_guide.md)
+- [REST API Documentation](../API_SETUP_GUIDE.md) - Complete API setup and integration guide
 - or visit <a href="https://django-crm-admin.readthedocs.io" target="_blank">Read The Docs</a>
 - For unreleased changes, see [CHANGELOG](https://github.com/DjangoCRM/django-crm/blob/main/CHANGELOG.md)
 

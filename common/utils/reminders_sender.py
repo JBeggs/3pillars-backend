@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import override
+from django.db.utils import ProgrammingError, OperationalError
 
 from common.models import Reminder
 from common.utils.helpers import get_trans_for_user
@@ -34,6 +35,15 @@ class RemindersSender(threading.Thread, SingleInstance):
             # To prevent hitting the db until the apps.ready() is completed.
             time.sleep(1)
 
+            # Wait for database tables to exist (migrations may not have run yet)
+            while True:
+                try:
+                    # Try to access Reminders table to check if it exists
+                    Reminders.objects.exists()
+                    break
+                except (ProgrammingError, OperationalError):
+                    time.sleep(1)
+
             while True:
                 if settings.DEBUG:
                     break
@@ -49,8 +59,13 @@ class RemindersSender(threading.Thread, SingleInstance):
 
 
 def send_remainders() -> None:
-    now = timezone.now()
-    reminders = Reminder.objects.filter(active=True, reminder_date__lte=now)
+    try:
+        now = timezone.now()
+        reminders = Reminder.objects.filter(active=True, reminder_date__lte=now)
+    except (ProgrammingError, OperationalError):
+        # Tables don't exist yet, skip this run
+        return
+    
     if reminders:
         site = Site.objects.get_current()
         template = loader.get_template("common/reminder_message.html")

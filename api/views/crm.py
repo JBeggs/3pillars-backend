@@ -92,6 +92,15 @@ class ContactViewSet(viewsets.ModelViewSet):
             if isinstance(e, ValidationError):
                 raise
             raise ValidationError(f'Error creating contact: {str(e)}')
+    
+    def perform_destroy(self, instance):
+        """Delete contact - ensure user has permission."""
+        # Check if user can delete (owner, superuser, or chief)
+        user = self.request.user
+        if not (user.is_superuser or getattr(user, 'is_chief', False) or instance.owner == user):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('You do not have permission to delete this contact.')
+        instance.delete()
 
 
 class DealViewSet(viewsets.ModelViewSet):

@@ -21,6 +21,19 @@ class Command(BaseCommand):
         verbosity = options.get('verbosity', 1)  # Django provides this automatically
         skip_fixtures = options.get('skip_fixtures', False)
         
+        # Check if we're in a build environment (database not available)
+        # Railway build phase doesn't have database access - skip setupdata
+        build_phase = os.environ.get('RAILWAY_ENVIRONMENT') and not os.environ.get('PORT')
+        if build_phase:
+            self.stdout.write(
+                self.style.WARNING(
+                    '⚠️  Skipping setupdata during build phase (database not available).\n'
+                    '   Migrations will run automatically during release phase via Procfile.\n'
+                    '   To run setupdata manually, use: railway run python manage.py setupdata'
+                )
+            )
+            return
+        
         self.stdout.write(self.style.SUCCESS('Starting setupdata...'))
         
         # Step 1: Migrations
@@ -51,6 +64,18 @@ class Command(BaseCommand):
                             import time
                             time.sleep(wait_time)
                             continue
+                    # Check if error is due to database not being available (build phase)
+                    error_msg = str(e).lower()
+                    if 'could not translate host name' in error_msg or 'name or service not known' in error_msg:
+                        self.stdout.write(
+                            self.style.WARNING(
+                                '⚠️  Database not available (likely build phase).\n'
+                                '   Skipping setupdata. Migrations will run during release phase.\n'
+                                '   To run setupdata manually: railway run python manage.py setupdata'
+                            )
+                        )
+                        return  # Exit gracefully, don't fail build
+                    
                     self.stdout.write(self.style.ERROR(f'✗ Migration error: {e}'))
                     if verbosity >= 2:
                         import traceback

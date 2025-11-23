@@ -80,13 +80,23 @@ else:
     print("[DB Config] ❌ No database URL found")
 
 if database_url:
-    # Parse the database URL directly using default parameter
-    # This avoids relying on environment variable overrides
-    db_config = dj_database_url.config(
-        default=database_url,  # Pass URL directly
-        conn_max_age=300,  # Reduced from 600 to recycle connections faster
-        conn_health_checks=True,
-    )
+    # Parse the database URL directly
+    # IMPORTANT: dj_database_url.config() reads from os.environ['DATABASE_URL'] first
+    # So we need to temporarily override it, or parse the URL directly
+    # Temporarily override DATABASE_URL so dj_database_url.config() uses our selected URL
+    original_db_url = os.environ.get('DATABASE_URL')
+    os.environ['DATABASE_URL'] = database_url
+    try:
+        db_config = dj_database_url.config(
+            conn_max_age=300,  # Reduced from 600 to recycle connections faster
+            conn_health_checks=True,
+        )
+    finally:
+        # Restore original DATABASE_URL
+        if original_db_url:
+            os.environ['DATABASE_URL'] = original_db_url
+        elif 'DATABASE_URL' in os.environ:
+            del os.environ['DATABASE_URL']
     
     # Ensure ENGINE is set correctly
     if 'ENGINE' not in db_config:

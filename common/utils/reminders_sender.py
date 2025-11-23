@@ -37,9 +37,20 @@ class RemindersSender(threading.Thread, SingleInstance):
             time.sleep(1)
 
             # Wait for the specific table to exist by checking information_schema (avoids error logs)
+            # Add timeout to prevent infinite hanging if database is unreachable
+            max_wait_time = 300  # Maximum 5 minutes wait
+            start_time = time.time()
             while True:
+                # Check if we've waited too long
+                if time.time() - start_time > max_wait_time:
+                    print("[RemindersSender] Timeout waiting for database - giving up")
+                    return  # Exit thread if database never becomes available
+                
                 try:
+                    # Test connection first with a quick query
                     with connection.cursor() as cursor:
+                        cursor.execute("SELECT 1")
+                        # Connection works, now check for table
                         cursor.execute("""
                             SELECT 1 FROM information_schema.tables 
                             WHERE table_schema = 'public' AND table_name = 'settings_reminders'
@@ -47,9 +58,16 @@ class RemindersSender(threading.Thread, SingleInstance):
                         if cursor.fetchone():
                             # Table exists, break out of wait loop
                             break
-                except (ProgrammingError, OperationalError):
-                    pass
-                time.sleep(5)  # Check every 5 seconds to reduce log spam
+                except OperationalError as e:
+                    # Database connection issue - wait longer
+                    time.sleep(10)
+                except ProgrammingError:
+                    # Table doesn't exist yet - normal during migrations
+                    time.sleep(5)
+                except Exception as e:
+                    # Unexpected error - log and wait
+                    print(f"[RemindersSender] Unexpected error waiting for database: {e}")
+                    time.sleep(10)
 
             while True:
                 if settings.DEBUG:

@@ -57,9 +57,20 @@ class SendMassmail(threading.Thread, SingleInstance):
             time.sleep(0.01)  # wait for django to start
         
         # Wait for the specific table to exist by checking information_schema (avoids error logs)
+        # Add timeout to prevent infinite hanging if database is unreachable
+        max_wait_time = 300  # Maximum 5 minutes wait
+        start_time = time.time()
         while True:
+            # Check if we've waited too long
+            if time.time() - start_time > max_wait_time:
+                print("[SendMassmail] Timeout waiting for database - giving up")
+                return  # Exit thread if database never becomes available
+            
             try:
+                # Test connection first with a quick query
                 with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    # Connection works, now check for table
                     cursor.execute("""
                         SELECT 1 FROM information_schema.tables 
                         WHERE table_schema = 'public' AND table_name = 'settings_massmailsettings'
@@ -68,9 +79,18 @@ class SendMassmail(threading.Thread, SingleInstance):
                         # Table exists, now try to get the settings
                         massmail_settings = MassmailSettings.objects.get(id=1)
                         break
-            except (OperationalError, ProgrammingError, MassmailSettings.DoesNotExist):
-                pass
-            time.sleep(5)  # Check every 5 seconds to reduce log spam
+            except (OperationalError, ProgrammingError, MassmailSettings.DoesNotExist) as e:
+                # Connection failed or table doesn't exist yet
+                if isinstance(e, OperationalError):
+                    # Database connection issue - wait longer
+                    time.sleep(10)
+                else:
+                    # Table doesn't exist yet - normal during migrations
+                    time.sleep(5)
+            except Exception as e:
+                # Unexpected error - log and wait
+                print(f"[SendMassmail] Unexpected error waiting for database: {e}")
+                time.sleep(10)
 
         if not settings.MAILING or settings.TESTING:
             return

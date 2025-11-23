@@ -23,6 +23,7 @@ from api.views.tasks import (
     MemoViewSet,
 )
 from api.views.chat import ChatMessageViewSet
+from api.views.contenttype import get_content_type_id
 
 router = DefaultRouter()
 router.register(r'companies', CompanyViewSet, basename='company')
@@ -47,6 +48,9 @@ urlpatterns = [
     # API Documentation (specific paths)
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    
+    # ContentType helper endpoint
+    path('contenttype/', get_content_type_id, name='get_content_type_id'),
     
     # API routes (router URLs - matches /api/companies/, /api/tasks/, etc.)
     path('', include(router.urls)),

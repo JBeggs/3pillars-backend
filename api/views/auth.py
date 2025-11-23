@@ -10,6 +10,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.contrib.auth import get_user_model, authenticate
+from django.db.utils import OperationalError, ProgrammingError
 from drf_spectacular.utils import extend_schema
 
 from api.serializers.auth import (
@@ -49,6 +50,11 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 {'error': 'Invalid username or password'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+        except (OperationalError, ProgrammingError) as e:
+            return Response(
+                {'error': 'Database connection error. Please try again later.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
         
         # Check if account is active
         if not user.is_active:
@@ -58,7 +64,14 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             )
         
         # Verify password before attempting token generation
-        authenticated_user = authenticate(username=username, password=password)
+        try:
+            authenticated_user = authenticate(username=username, password=password)
+        except (OperationalError, ProgrammingError) as e:
+            return Response(
+                {'error': 'Database connection error. Please try again later.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        
         if not authenticated_user:
             return Response(
                 {'error': 'Invalid username or password'},
@@ -74,6 +87,11 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                     user = User.objects.get(username=username)
                     user_data = UserSerializer(user).data
                     response.data['user'] = user_data
+                except (OperationalError, ProgrammingError) as e:
+                    return Response(
+                        {'error': 'Database connection error. Please try again later.'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE
+                    )
                 except Exception as e:
                     return Response(
                         {'error': f'Error retrieving user data: {str(e)}'},
@@ -166,9 +184,14 @@ refresh_token = refresh_token_view
 def list_users(request):
     """List users endpoint - excludes admin/superuser."""
     User = get_user_model()
-    # Get active users, excluding superusers
-    users = User.objects.filter(is_active=True, is_superuser=False).order_by('username')
-    
-    serializer = UserSerializer(users, many=True)
-    return Response(serializer.data)
+    try:
+        # Get active users, excluding superusers
+        users = User.objects.filter(is_active=True, is_superuser=False).order_by('username')
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+    except (OperationalError, ProgrammingError) as e:
+        return Response(
+            {'error': 'Database connection error. Please try again later.'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
 

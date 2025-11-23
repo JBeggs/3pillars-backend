@@ -43,9 +43,19 @@ if railway_domain and railway_domain not in ALLOWED_HOSTS:
 # Railway automatically provides DATABASE_URL environment variable
 import dj_database_url
 
-# Prefer DATABASE_PUBLIC_URL for local Railway CLI connections
-# DATABASE_URL uses internal hostnames that don't work from local machines
-database_url = os.environ.get('DATABASE_PUBLIC_URL') or os.environ.get('DATABASE_URL')
+# Choose database URL based on environment:
+# - On Railway (deployed): Use DATABASE_URL (internal, faster, more reliable)
+# - Local railway run: Use DATABASE_PUBLIC_URL (external, works from local machine)
+# Detect if we're actually running in Railway's container (not just railway run locally)
+# Check if we're in Railway's container by looking for PORT env var (set by Railway at runtime)
+# railway run commands don't set PORT, only RAILWAY_ENVIRONMENT
+is_railway_container = os.environ.get('PORT') is not None
+if is_railway_container:
+    # Actually deployed in Railway container - use internal DATABASE_URL
+    database_url = os.environ.get('DATABASE_URL')
+else:
+    # Local development or railway run - use public URL if available
+    database_url = os.environ.get('DATABASE_PUBLIC_URL') or os.environ.get('DATABASE_URL')
 
 if database_url:
     # Temporarily override DATABASE_URL so dj_database_url.config() uses the correct URL
@@ -60,11 +70,12 @@ if database_url:
         # psycopg2 connection parameters (these go in OPTIONS)
         db_config.setdefault('OPTIONS', {})
         db_config['OPTIONS'].update({
-            'connect_timeout': 30,  # Increased timeout for Railway connections (seconds)
+            'connect_timeout': 10,  # Connection timeout (seconds)
+            'options': '-c statement_timeout=30000',  # 30 second query timeout
         })
-        # Connection pool settings
+        # Connection pool settings - reduce to avoid connection exhaustion
         if 'CONN_MAX_AGE' not in db_config:
-            db_config['CONN_MAX_AGE'] = 600
+            db_config['CONN_MAX_AGE'] = 300  # Reduced from 600 to recycle connections faster
         DATABASES = {
             'default': db_config
         }

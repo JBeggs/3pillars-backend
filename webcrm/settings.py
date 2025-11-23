@@ -52,10 +52,15 @@ is_railway_container = os.environ.get('PORT') is not None
 if is_railway_container:
     # Actually deployed in Railway container - use internal DATABASE_URL
     database_url = os.environ.get('DATABASE_URL')
+    print("[DB Config] Railway container detected (PORT=%s), using internal DATABASE_URL" % os.environ.get('PORT'))
 else:
     # Local development or railway run - ALWAYS prefer DATABASE_PUBLIC_URL
     # railway run commands can't resolve railway.internal hostnames
     database_url = os.environ.get('DATABASE_PUBLIC_URL') or os.environ.get('DATABASE_URL')
+    if os.environ.get('DATABASE_PUBLIC_URL'):
+        print("[DB Config] Local/railway run detected, using DATABASE_PUBLIC_URL")
+    else:
+        print("[DB Config] No DATABASE_PUBLIC_URL, falling back to DATABASE_URL")
 
 if database_url:
     # Parse the database URL directly using default parameter

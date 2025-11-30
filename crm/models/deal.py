@@ -183,6 +183,16 @@ class Deal(Base1):
         verbose_name=_("Co-owner"),
         related_name="%(app_label)s_%(class)s_co_owner_related",
     )
+    # Product from 3 pillars (for registration deals)
+    product = models.ForeignKey(
+        'common.Product',
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='deals',
+        verbose_name=_("Product"),
+        help_text=_("Product/service associated with this deal (for registration deals)")
+    )
     files = GenericRelation('common.TheFile')
 
     def change_stage_data(self, date):

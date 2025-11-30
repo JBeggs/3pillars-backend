@@ -13,6 +13,7 @@ class CommonConfig(AppConfig):
     def ready(self):
         # Implicitly connect a signal handler
         from common.signals.handlers import user_creation_handler   # NOQA
+        from common.signals.deal_signals import handle_deal_completion  # NOQA
         from common.utils.notif_email_sender import NotifEmailSender
 
         self.nes = NotifEmailSender()       # NOQA

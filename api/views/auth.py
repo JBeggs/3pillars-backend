@@ -2,7 +2,10 @@
 Authentication views for API.
 Fail hard - explicit error handling, no silent failures.
 """
+import logging
 from rest_framework import status
+
+logger = logging.getLogger(__name__)
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -17,6 +20,7 @@ from api.serializers.auth import (
     UserSerializer,
     RefreshTokenSerializer,
     RefreshTokenResponseSerializer,
+    BusinessRegistrationSerializer,
 )
 
 User = get_user_model()
@@ -87,6 +91,17 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                     user = User.objects.get(username=username)
                     user_data = UserSerializer(user).data
                     response.data['user'] = user_data
+                    
+                    # Get user's company if available
+                    from ecommerce.models import EcommerceCompany
+                    company = EcommerceCompany.objects.filter(owner=user).first()
+                    if company:
+                        response.data['company'] = {
+                            'id': str(company.id),
+                            'name': company.name,
+                            'slug': company.slug,
+                            'email': company.email,
+                        }
                 except (OperationalError, ProgrammingError) as e:
                     return Response(
                         {'error': 'Database connection error. Please try again later.'},
@@ -124,16 +139,85 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             )
 
 
+@extend_schema(
+    request=BusinessRegistrationSerializer,
+    responses={
+        201: {
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string'},
+                'user': UserSerializer,
+                'company': {
+                    'type': 'object',
+                    'properties': {
+                        'id': {'type': 'string'},
+                        'name': {'type': 'string'},
+                        'slug': {'type': 'string'},
+                        'email': {'type': 'string'},
+                    }
+                },
+                'tokens': {
+                    'type': 'object',
+                    'properties': {
+                        'access': {'type': 'string'},
+                        'refresh': {'type': 'string'},
+                    }
+                }
+            }
+        },
+        400: {'type': 'object', 'properties': {'error': {'type': 'string'}}},
+    },
+    operation_id='register_business',
+    summary='Register a new business',
+    description='Register a new small business account with company details. Creates both user and EcommerceCompany.',
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
-    """User registration endpoint."""
-    # TODO: Implement registration logic if needed
-    # For now, return not implemented
-    return Response(
-        {'message': 'Registration not implemented. Use admin panel.'},
-        status=status.HTTP_501_NOT_IMPLEMENTED
-    )
+    """Business registration endpoint - creates user and company."""
+    serializer = BusinessRegistrationSerializer(data=request.data)
+    
+    if not serializer.is_valid():
+        return Response(
+            {'error': serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        result = serializer.save()
+        user = result['user']
+        company = result['company']
+        
+        # Generate tokens for immediate login
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+        
+        # Return user data, company data, and tokens
+        # Note: Company status is 'trial' until deal is completed, then activated to 'active'
+        return Response({
+            'message': 'Registration successful. Your account is pending approval. You will be notified once approved.',
+            'user': UserSerializer(user).data,
+            'company': {
+                'id': str(company.id),
+                'name': company.name,
+                'slug': company.slug,
+                'email': company.email,
+                'status': company.status,  # Will be 'trial'
+            },
+            'tokens': {
+                'access': access_token,
+                'refresh': refresh_token,
+            },
+            'pending_approval': True,
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Registration error: {e}", exc_info=True)
+        return Response(
+            {'error': f'Registration failed: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @extend_schema(

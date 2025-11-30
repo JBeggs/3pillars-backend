@@ -1,39 +1,74 @@
-    aiohttp==3.13.2
-    aiosignal==1.4.0
+# Core Django Framework
+Django==5.2.8
     asgiref==3.11.0
-    attrs==25.4.0
-    certifi==2025.11.12
-    charset-normalizer==3.4.4
-    Django==5.2.8
-    et-xmlfile==2.0.0
-    frozenlist==1.8.0
-    geoip2==5.2.0
-    idna==3.11
-    maxminddb>=3.0.0,<4.0.0
-    multidict==6.7.0
-    # mysqlclient==2.2.7  # Only needed if using MySQL (not SQLite). Install MySQL client libraries first.
-    numpy==2.3.5
-    openpyxl==3.1.5
-    pandas==2.3.3
-    polib==1.2.0
-    python-dateutil==2.9.0.post0
-    pytz==2025.2
-    requests==2.32.5
-    six==1.17.0
     sqlparse==0.5.3
-    tendo==0.3.0
     tzdata==2025.2
-    urllib3==2.5.0
-    XlsxWriter==3.2.9
-    yarl==1.22.0
+pytz==2025.2
+
+# Django REST Framework
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
-django-cors-headers==4.3.1
 django-filter==24.2
 drf-spectacular==0.27.0
-# Railway deployment dependencies
+
+# CORS and Security
+django-cors-headers==4.3.1
+
+# Database Drivers
+# PostgreSQL (for production)
 psycopg2-binary==2.9.9
-gunicorn==21.2.0
-whitenoise==6.6.0
-dj-database-url==2.1.0
+# MySQL (for PythonAnywhere)
+# Try mysqlclient first, if it fails use pymysql as fallback
+# mysqlclient==2.2.7  # Requires MySQL client libraries
+pymysql==1.1.0  # Pure Python MySQL client (works on PythonAnywhere without system libraries)
+
+# HTTP and API Clients
+requests==2.32.5
+aiohttp==3.13.2
+aiosignal==1.4.0
+attrs==25.4.0
+certifi==2025.11.12
+charset-normalizer==3.4.4
+frozenlist==1.8.0
+idna==3.11
+multidict==6.7.0
+urllib3==2.5.0
+yarl==1.22.0
+
+# Data Processing and Export
+pandas==2.3.3
+numpy==2.3.5
+openpyxl==3.1.5
+XlsxWriter==3.2.9
+et-xmlfile==2.0.0
+python-dateutil==2.9.0.post0
+six==1.17.0
+
+# GeoIP and Location Services
+geoip2==5.2.0
+maxminddb>=3.0.0,<4.0.0
+
+# Internationalization
+polib==1.2.0
+
+# Utilities
+tendo==0.3.0
+
+# Environment Configuration
 python-decouple==3.8
+dj-database-url==2.1.0
+
+# Production Server (for PythonAnywhere or other WSGI servers)
+gunicorn==21.2.0
+
+# Static Files (for local development and non-PythonAnywhere deployments)
+whitenoise==6.6.0  # PythonAnywhere serves static files, but needed for local dev
+
+# Optional: For Yoco Payment Gateway Integration
+# yoco-python==1.0.0  # Uncomment when Yoco Python SDK is available
+
+# Optional: For Pudo/Courier Integration
+# courier-python==1.0.0  # Uncomment when courier API SDK is available
+
+# Firebase Admin SDK (for push notifications)
+firebase-admin==6.5.0

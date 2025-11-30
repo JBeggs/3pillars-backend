@@ -6,7 +6,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from api.views.auth import CustomTokenObtainPairView, refresh_token, list_users
+from api.views.auth import CustomTokenObtainPairView, refresh_token, list_users, register
 from api.views.landing import MobileAppLandingView
 from api.views.crm import (
     CompanyViewSet,
@@ -42,7 +42,7 @@ urlpatterns = [
     # Authentication (specific paths first)
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('auth/register/', refresh_token, name='register'),  # Placeholder
+    path('auth/register/', register, name='register'),
     path('auth/users/', list_users, name='list_users'),
     
     # API Documentation (specific paths)
@@ -51,6 +51,12 @@ urlpatterns = [
     
     # ContentType helper endpoint
     path('contenttype/', get_content_type_id, name='get_content_type_id'),
+    
+    # E-commerce Multi-Tenant API (v1)
+    path('v1/', include('ecommerce.urls')),
+    
+    # FCM (Firebase Cloud Messaging) API
+    path('fcm/', include('fcm.urls')),
     
     # API routes (router URLs - matches /api/companies/, /api/tasks/, etc.)
     path('', include(router.urls)),

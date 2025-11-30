@@ -112,6 +112,11 @@ class DealSerializer(serializers.ModelSerializer):
     co_owner_username = serializers.CharField(source='co_owner.username', read_only=True)
     stage_name = serializers.CharField(source='stage.name', read_only=True)
     currency_code = serializers.CharField(source='currency.name', read_only=True)
+    product_id = serializers.SerializerMethodField()
+    product_name = serializers.SerializerMethodField()
+    product_slug = serializers.SerializerMethodField()
+    product_price = serializers.SerializerMethodField()
+    product_time_from = serializers.SerializerMethodField()
     
     class Meta:
         model = Deal
@@ -120,6 +125,7 @@ class DealSerializer(serializers.ModelSerializer):
             'amount', 'currency', 'currency_code', 'stage', 'stage_name',
             'owner', 'owner_username', 'co_owner', 'co_owner_username',
             'next_step', 'next_step_date', 'description', 'workflow',
+            'product', 'product_id', 'product_name', 'product_slug', 'product_price', 'product_time_from',
             'creation_date', 'update_date'
         ]
         read_only_fields = ['id', 'creation_date', 'update_date']
@@ -134,6 +140,7 @@ class DealSerializer(serializers.ModelSerializer):
             'amount': {'required': False, 'allow_null': True},
             'currency': {'required': False, 'allow_null': True},
             'co_owner': {'required': False, 'allow_null': True},
+            'product': {'required': False, 'allow_null': True},
         }
     
     def validate(self, data):
@@ -160,6 +167,73 @@ class DealSerializer(serializers.ModelSerializer):
         """Return contact full name if exists."""
         if obj.contact:
             return f"{obj.contact.first_name} {obj.contact.last_name}".strip()
+        return None
+    
+    def get_product_id(self, obj) -> int | None:
+        """Return product ID - check direct product field first, then EcommerceCompany."""
+        # First check if deal has direct product field
+        if obj.product:
+            return obj.product.id
+        # Fallback to EcommerceCompany relationship
+        try:
+            from ecommerce.models import EcommerceCompany
+            company = EcommerceCompany.objects.filter(registration_deal=obj).first()
+            if company and company.product:
+                return company.product.id
+        except Exception:
+            pass
+        return None
+    
+    def get_product_name(self, obj) -> str | None:
+        """Return product name - check direct product field first, then EcommerceCompany."""
+        if obj.product:
+            return obj.product.name
+        try:
+            from ecommerce.models import EcommerceCompany
+            company = EcommerceCompany.objects.filter(registration_deal=obj).first()
+            if company and company.product:
+                return company.product.name
+        except Exception:
+            pass
+        return None
+    
+    def get_product_slug(self, obj) -> str | None:
+        """Return product slug - check direct product field first, then EcommerceCompany."""
+        if obj.product:
+            return obj.product.slug
+        try:
+            from ecommerce.models import EcommerceCompany
+            company = EcommerceCompany.objects.filter(registration_deal=obj).first()
+            if company and company.product:
+                return company.product.slug
+        except Exception:
+            pass
+        return None
+    
+    def get_product_price(self, obj) -> str | None:
+        """Return product price - check direct product field first, then EcommerceCompany."""
+        if obj.product and obj.product.price:
+            return str(obj.product.price)
+        try:
+            from ecommerce.models import EcommerceCompany
+            company = EcommerceCompany.objects.filter(registration_deal=obj).first()
+            if company and company.product and company.product.price:
+                return str(company.product.price)
+        except Exception:
+            pass
+        return None
+    
+    def get_product_time_from(self, obj) -> str | None:
+        """Return product time_from - check direct product field first, then EcommerceCompany."""
+        if obj.product and obj.product.time_from:
+            return obj.product.time_from.strftime('%H:%M')
+        try:
+            from ecommerce.models import EcommerceCompany
+            company = EcommerceCompany.objects.filter(registration_deal=obj).first()
+            if company and company.product and company.product.time_from:
+                return company.product.time_from.strftime('%H:%M')
+        except Exception:
+            pass
         return None
 
 

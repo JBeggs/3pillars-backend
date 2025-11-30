@@ -26,6 +26,29 @@ urlpatterns = [
     path('api/', include('api.urls')),
 ]
 
+# Serve static files (works in both DEBUG and production for local dev)
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.conf.urls.static import static
+from django.views.static import serve
+from django.urls import re_path
+
+# Always serve static files from STATIC_ROOT (for both DEBUG and production in local dev)
+# This must be added BEFORE i18n_patterns to ensure static files are accessible
+if settings.STATIC_ROOT and settings.STATIC_ROOT.exists():
+    urlpatterns += [
+        re_path(
+            r'^static/(?P<path>.*)$',
+            serve,
+            {'document_root': str(settings.STATIC_ROOT)},
+        ),
+    ]
+
+# Add staticfiles URL patterns (serves from STATICFILES_DIRS and app static folders)
+# This only works when DEBUG=True
+if settings.DEBUG:
+    urlpatterns += staticfiles_urlpatterns()
+
+# Serve media files
 urlpatterns += static(
     settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
 )

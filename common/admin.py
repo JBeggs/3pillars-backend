@@ -1,6 +1,8 @@
 import re
 from django import forms
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.contenttypes.admin import GenericStackedInline
 from django.db.models import Q
 from django.forms import ModelForm
@@ -11,10 +13,13 @@ from common.models import Department
 from common.models import Reminder
 from common.models import TheFile
 from common.models import UserProfile
+from common.models import Product
 from common.site import reminderadmin
 from common.site import userprofileadmin
 from crm.site.crmadminsite import crm_site
 from crm.utils.admfilters import ScrollRelatedOnlyFieldListFilter
+
+User = get_user_model()
 
 
 class DepartmentAdmin(admin.ModelAdmin):
@@ -238,6 +243,62 @@ class UserProfileAdmin(userprofileadmin.UserProfileAdmin):
 
 crm_site.register(Reminder, reminderadmin.ReminderAdmin)
 crm_site.register(UserProfile, userprofileadmin.UserProfileAdmin)
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+        list_display = ('name', 'pillar', 'is_active', 'is_default', 'order')
+        list_filter = ('pillar', 'is_active', 'is_default')
+        search_fields = ('name', 'description')
+        ordering = ('order', 'name')
+        fieldsets = (
+            (None, {
+                'fields': ('name', 'slug', 'description', 'pillar')
+            }),
+            ('Settings', {
+                'fields': ('is_active', 'is_default', 'order')
+            }),
+        )
+
+
+# Custom UserAdmin to allow superusers to edit user details
+class CustomUserAdmin(BaseUserAdmin):
+    """Custom UserAdmin that allows superusers to edit all user fields."""
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Make fields readonly for non-superusers, but allow superusers to edit everything."""
+        readonly = super().get_readonly_fields(request, obj)
+        if request.user.is_superuser:
+            # Superusers can edit everything except password (handled separately)
+            return [f for f in readonly if f != 'password']
+        return readonly
+    
+    def has_change_permission(self, request, obj=None):
+        """Allow superusers to change any user."""
+        if request.user.is_superuser:
+            return True
+        return super().has_change_permission(request, obj)
+    
+    def has_delete_permission(self, request, obj=None):
+        """Allow superusers to delete any user (except themselves)."""
+        if request.user.is_superuser:
+            if obj and obj == request.user:
+                # Prevent superusers from deleting themselves
+                return False
+            return True
+        return super().has_delete_permission(request, obj)
+    
+    def has_add_permission(self, request):
+        """Allow superusers to add users."""
+        if request.user.is_superuser:
+            return True
+        return super().has_add_permission(request)
+
+
+# Unregister User if already registered, then register with custom admin
+if admin.site.is_registered(User):
+    admin.site.unregister(User)
+
+admin.site.register(User, CustomUserAdmin)
 
 admin.site.register(Department, DepartmentAdmin)
 admin.site.register(admin.models.LogEntry, LogEntrytAdmin)

@@ -58,6 +58,9 @@ urlpatterns = [
     # FCM (Firebase Cloud Messaging) API
     path('fcm/', include('fcm.urls')),
     
+    # News Platform API
+    path('news/', include('news.urls')),
+    
     # API routes (router URLs - matches /api/companies/, /api/tasks/, etc.)
     path('', include(router.urls)),
 ]

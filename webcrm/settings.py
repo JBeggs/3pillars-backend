@@ -203,6 +203,8 @@ INSTALLED_APPS = [
     'ecommerce.apps.EcommerceConfig',
     # FCM (Firebase Cloud Messaging)
     'fcm.apps.FcmConfig',
+    # News Platform App
+    'news.apps.NewsConfig',
 ]
 
 # WhiteNoise middleware (only for non-PythonAnywhere deployments)

@@ -38,12 +38,22 @@ class FCMService:
                 # Try to get credentials from settings
                 cred_path = getattr(settings, 'FIREBASE_CREDENTIALS_PATH', None)
                 if cred_path:
-                    cred = credentials.Certificate(cred_path)
-                    firebase_admin.initialize_app(cred)
+                    # Check if file exists before trying to use it
+                    import os
+                    if os.path.exists(cred_path):
+                        cred = credentials.Certificate(cred_path)
+                        firebase_admin.initialize_app(cred)
+                        logger.info("Firebase Admin SDK initialized successfully")
+                    else:
+                        logger.warning(
+                            f"Firebase credentials file not found at: {cred_path}. "
+                            f"FCM functionality will be disabled. "
+                            f"Please upload firebase-service-account.json or set FIREBASE_CREDENTIALS_PATH environment variable."
+                        )
                 else:
                     # Try to use default credentials (for Google Cloud environments)
                     firebase_admin.initialize_app()
-                logger.info("Firebase Admin SDK initialized successfully")
+                    logger.info("Firebase Admin SDK initialized successfully (using default credentials)")
             except Exception as e:
                 logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
     

@@ -37,12 +37,17 @@ if allowed_hosts_str:
 else:
     # Default for local development
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.100']
-    
-    # PythonAnywhere domains - add your username here
-    # Example: 'yourusername.pythonanywhere.com'
-    pythonanywhere_username = os.environ.get('PYTHONANYWHERE_USERNAME', '')
-    if pythonanywhere_username:
-        ALLOWED_HOSTS.append(f'{pythonanywhere_username}.pythonanywhere.com')
+
+# PythonAnywhere domains - automatically add based on username or default
+pythonanywhere_username = os.environ.get('PYTHONANYWHERE_USERNAME', '')
+if pythonanywhere_username:
+    domain = f'{pythonanywhere_username}.pythonanywhere.com'
+    if domain not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(domain)
+
+# Always add 3pillars.pythonanywhere.com if not already present (for this deployment)
+if '3pillars.pythonanywhere.com' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('3pillars.pythonanywhere.com')
 
 # Database Configuration
 # PythonAnywhere typically uses MySQL, but PostgreSQL and SQLite are also supported
@@ -54,7 +59,7 @@ ON_PYTHONANYWHERE = (
     bool(os.environ.get('PYTHONANYWHERE_USERNAME', ''))
 )
 
-if ON_PYTHONANYWHERE:
+if ON_PYTHONANYWHERE:   
     # PythonAnywhere MySQL configuration
     # Get credentials from environment variables or use defaults
     DATABASES = {
@@ -488,7 +493,21 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # Firebase Configuration
-FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'firebase-service-account.json')
+# Allow override via environment variable (useful for PythonAnywhere)
+# If not set, defaults to project root
+FIREBASE_CREDENTIALS_PATH = os.environ.get(
+    'FIREBASE_CREDENTIALS_PATH',
+    os.path.join(BASE_DIR, 'firebase-service-account.json')
+)
+# Check if file exists, log warning if not (won't crash app)
+if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        f"Firebase credentials file not found at: {FIREBASE_CREDENTIALS_PATH}. "
+        f"FCM functionality will be disabled. "
+        f"Set FIREBASE_CREDENTIALS_PATH environment variable or upload the file."
+    )
 
 # Optional: API Documentation
 SPECTACULAR_SETTINGS = {

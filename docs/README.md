@@ -1,88 +1,69 @@
+# Documentation Index
 
-# Django CRM Documentation Directory
+This directory contains all documentation for the Three Pillars Backend.
 
-This directory contains all documentation-related resources for the [CRM application software](https://DjangoCRM.github.io/info/).  
-Whether you're a new user looking for installation instructions or a contributor preparing a pull request, this folder provides the structured documentation and supporting materials needed to work with Django CRM effectively.
+## 📁 Directory Structure
 
-## Directory Structure
+### `/deployment/`
+Deployment guides and checklists:
+- **[PythonAnywhere Quick Start](../docs/deployment/PYTHONANYWHERE_QUICK_START.md)** - Fast deployment guide
+- **[PythonAnywhere Deployment](../docs/deployment/PYTHONANYWHERE_DEPLOYMENT.md)** - Detailed deployment instructions
+- **[Deployment Checklist](../docs/deployment/DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
+- **[Rename to 3pillars-backend](../docs/deployment/RENAME_TO_3PILLARS_BACKEND.md)** - Repository rename guide
+- **[Merge Main Branches](../docs/deployment/MERGE_MAIN_BRANCHES.md)** - Git branch consolidation
 
-- `/README/`  
-  Translations of the repository's main `README.md` file into multiple languages.
+### `/setup/`
+Setup and configuration guides:
+- **[Local Setup](../docs/setup/LOCAL_SETUP.md)** - Local development setup
+- **[PythonAnywhere README](../docs/setup/README_PYTHONANYWHERE.md)** - PythonAnywhere overview
 
-- `/pics/`  
-  Screenshot assets used in the translated README files and user documentation.
+### `/integrations/`
+Third-party integration guides:
+- **[Firebase Setup](../docs/integrations/FIREBASE_SETUP.md)** - Firebase Cloud Messaging configuration
+- **[FCM Integration](../docs/integrations/FCM_INTEGRATION.md)** - Push notification setup
+- **[FCM Notification Settings](../docs/integrations/FCM_NOTIFICATION_SETTINGS.md)** - User notification preferences
+- **[Email Setup](../docs/integrations/EMAIL_SETUP.md)** - Email configuration
 
-- `/site/`  
-  Source files for the official [Django CRM documentation](https://django-crm-admin.readthedocs.io) site.  
-  Built with **Markdown** using the **Material for MkDocs** theme and hosted on **Read the Docs**.
+### `/troubleshooting/`
+Problem-solving guides:
+- **[Database Connection Troubleshooting](../docs/troubleshooting/DATABASE_CONNECTION_TROUBLESHOOTING.md)** - Database issues
+- **[Database Timeout Fix](../docs/troubleshooting/DATABASE_CONNECTION_TIMEOUT_FIX.md)** - Timeout errors
+- **[Fix 503 Error](../docs/troubleshooting/FIX_503_ERROR.md)** - 503 service unavailable
+- **[Run Migrations](../docs/troubleshooting/RUN_MIGRATIONS_NOW.md)** - Migration issues
+- **[Run Setup Data](../docs/troubleshooting/RUN_SETUPDATA_LOCALLY.md)** - Initial data setup
 
-## Markdown Documentation Files
-
-The following guides are available in Markdown format:
-
-- **`installation_and_configuration_guide.md`**  
-  Step-by-step guide for installing and configuring Django CRM for local development or production deployment:
-
-    - [CRM software installation](https://github.com/DjangoCRM/django-crm/blob/main/docs/installation_and_configuration_guide.md#project-installation)
-    - [Configuration of the CRM application](https://github.com/DjangoCRM/django-crm/blob/main/docs/installation_and_configuration_guide.md#settings-of-django-crm)
-
-- **`django-crm_user_guide.md`**  
-  Comprehensive user manual for working with core CRM features such as leads, contacts, opportunities, and pipelines:
-
-    - [User guide for CRM](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_user_guide.md)
-    - [CRM Administrator's Guide](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_user_guide.md#table-of-contents#django-crm-administrators-guide)
-
-- **`crm_system_overview.md`**  
-  A [general overview of Django CRM](https://github.com/DjangoCRM/django-crm/blob/main/docs/crm_system_overview.md): its goals, main components, and how they integrate.
-
-- **`django-crm_analytics_app_overview.md`**  
-  Description of the built-in [Analytics application](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_analytics_app_overview.md): what it does and how it supports CRM reporting.
-
-- **`crm_app_features.md`**  
-  In-depth explanation of the primary [CRM app features](https://github.com/DjangoCRM/django-crm/blob/main/docs/crm_app_features.md), including lead and contact management.
-
-- **`django-crm_task_features.md`**  
-  Overview of [CRM Tasks](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_task_features.md) capabilities in Django CRM.
-
-- **`django-crm_memo_features.md`**  
-  Description of [memo/note-taking](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_memo_features.md) features integrated into the CRM.
-
-- **`pull_request_template.md`**  
-  Template to guide contributors in submitting effective pull requests to the repository.
-
-## For Contributors
-
-We welcome contributions! Here's how you can get involved:
-
-### Improving Documentation
-
-If you spot inaccuracies, unclear sections, or missing information, feel free to edit the appropriate Markdown files. All documentation updates should be consistent with the existing tone and structure.
-
-When editing or adding pages under `/site/`, make sure your changes render properly using MkDocs. To preview locally:
-
-```bash
-# Install dependencies
-pip install -r docs/site/requirements.txt
-
-# Serve the documentation site locally
-mkdocs serve
-````
-Then, open your browser and navigate to:  
-`http://127.0.0.1:8000/`
-
-### Adding Screenshots or Visual Aids
-
-Place all visual assets (screenshots, diagrams) into the `/pics/` subdirectory. Use relative paths when embedding them in documentation files.
-
-### Translating the README
-
-If you'd like to contribute a translation of the project’s main README, copy the original file into the `/README/` directory and follow the naming convention used for other translations. Include your language code in the filename (e.g., `README.fr.md` for French).
-
-## Hosting and Build Information
-
-* The documentation site is hosted on [Read the Docs](https://readthedocs.org/).
-* The site is generated using [MkDocs](https://www.mkdocs.org/) with the [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) theme.
+### Root `/docs/`
+Architecture and feature documentation:
+- **[Multi-Tenancy Impact](../docs/MULTI_TENANCY_IMPACT.md)** - Multi-tenant architecture overview
+- **[Multi-Tenant Setup Complete](../docs/MULTI_TENANT_SETUP_COMPLETE.md)** - Implementation details
 
 ---
 
-Thank you for helping us improve Django CRM’s documentation!
+## 🚀 Quick Links
+
+### Getting Started
+1. [Local Setup Guide](setup/LOCAL_SETUP.md)
+2. [PythonAnywhere Quick Start](deployment/PYTHONANYWHERE_QUICK_START.md)
+
+### Common Tasks
+- [Deploy to PythonAnywhere](deployment/PYTHONANYWHERE_QUICK_START.md)
+- [Set up Firebase](integrations/FIREBASE_SETUP.md)
+- [Configure Email](integrations/EMAIL_SETUP.md)
+
+### Troubleshooting
+- [Database Issues](troubleshooting/DATABASE_CONNECTION_TROUBLESHOOTING.md)
+- [503 Errors](troubleshooting/FIX_503_ERROR.md)
+- [Migration Problems](troubleshooting/RUN_MIGRATIONS_NOW.md)
+
+---
+
+## 📝 Documentation Standards
+
+- All guides use clear, step-by-step instructions
+- Code examples are tested and working
+- Troubleshooting sections included where relevant
+- Links to related documentation provided
+
+---
+
+**Last Updated**: December 2024

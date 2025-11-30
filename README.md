@@ -1,288 +1,400 @@
-<p align="right">
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/README.md">English</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-hindi.md">हिन्दी</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-spanish.md">Español</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-chinese.md">中文</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-portuguese.md">Português</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-arabic.md">اَلْعَرَبِيَّةُ</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-french.md">Français</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-german.md">Deutsch</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-dutch.md">Nederlands</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-italian.md">Italiano</a> |
-<a href="https://github.com/DjangoCRM/django-crm/blob/main/docs/README/README-ukrainian.md">Українська</a>
-</p>
+# Three Pillars Backend
+
+**Backend API for Three Pillars Business Management System**
+
+A comprehensive Django-based backend system powering the Three Pillars business ecosystem, including customer relationship management, multi-tenant e-commerce, business registration workflows, and real-time notifications.
 
 ---
 
-# Django-CRM
+## 🎯 What is This?
 
-*(Collaborative and Analytical Customer Relationship Management Software)*
+This is the **backend API** for the **Three Pillars** business management system, which serves three core business pillars:
 
-**Django-CRM** is an open-source CRM solution designed with **two primary goals**:
+1. **Operations & Management** - Project and task management
+2. **Sales & Marketing** - Technical sales and customer relations  
+3. **Product & Development** - Software development and technical solutions
 
-- **For end users**: Deliver enterprise-level open-source CRM software with a comprehensive suite of business solutions.  
-- **For maintainers and developers**: Significantly simplify the:
+### System Architecture
 
-  - Customization of the application
-  - Set up and maintain a production environment
-  - Development of new features and integrations
-
-**No need to learn a proprietary framework**: everything is built using the popular Django framework.  
-CRM also takes full advantage of the Django Admin site, with documentation all contained on a single web page!
-
-[<img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/pics/deals_screenshot.png" alt="Screenshot Django-CRM" align="center" style="float: center"/>](https://github.com/DjangoCRM/django-crm/blob/main/docs/pics/deals_screenshot.png)
-
-⭐️ Star if you like it! It will help others discover this project too.
-
----
-
-## Customer Relationship Management Features
-
-|                              |                                          |                                  |
-|------------------------------|------------------------------------------|----------------------------------|
-| ☑️ **Team Tasks & Projects** | ☑️ **Lead Management**                   | ☑️ **Email Marketing**           |
-| ☑️ **Contact Management**    | ☑️ **Deal Tracking & Sales Forecasting** | ☑️ **Role-Based Access Control** |
-| ☑️ **Sales Analytics**       | ☑️ **Internal Chat Integration**         | ☑️ **Mobile-Friendly Design**    |
-| ☑️ **Customizable Reports**  | ☑️ **Automated Email Sync**              | ☑️ **Multi-Currency Support**    |
-
-Learn more about [the software's capabilities](https://github.com/DjangoCRM/django-crm/blob/main/docs/crm_system_overview.md).
-
-Django CRM is an open-source client relationship management software.  
-This CRM is written in <a href="https://www.python.org" target="_blank"><img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/site/icons/python-logo.svg" style="vertical-align: bottom" alt="python logo" width="25" height="25"> Python</a>.  
-Frontend and backend are entirely based on the <a href="https://docs.djangoproject.com/en/dev/ref/contrib/admin/" target="_blank">Django Admin site</a>.  
-CRM app uses adaptive Admin HTML templates out-of-the-box.  
-Django is an excellently documented framework with lots of examples.  
-The documentation on the Admin site takes up only one web page.
-
-💡 The **original idea** is that since Django Admin is already a professional object management interface with a flexible permissions system for users (view, change, add, and delete objects), all you need to do is create models for the objects (such as Leads, Requests, Deals, Companies, etc.) and add business logic.  
-A **table view of CRM objects** with sorting and filtering by multiple fields enables users to quickly locate relevant information, prioritize tasks, and manage large volumes of data with greater efficiency.
-
-**All this ensures**:
-
-- **significantly easier project customization and development**
-- **simpler project deployment and production server support**
-
-The software package provides two websites:
-
-1. CRM site for all users
-2. Site for administrators
-
-The **project is mature and stable**, and has been successfully used in real applications for many years.
-
-## Main Applications
-
-The CRM software suite consists of the following **main applications** and their models:
-
-- **TASKS Management app**:
-  (*available to all users by default, regardless of their role*)
-  - Task (*with related: files, chat, reminders, tags - see [task features](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_task_features.md)*)
-    - subtasks
-  - Memo (*office memo*) - see [memo features](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_memo_features.md)
-    - tasks / project
-  - Project (*tasks collection*):
-  - ... (+ *4 more <a href="https://github.com/DjangoCRM/django-crm/tree/main/tasks/models" target="_blank">models</a>*)
-- **CRM app**:
-  - Requests (*commercial inquiries*)
-  - Leads (*potential customers*)
-  - Companies
-  - Contact persons (*associated with their companies*)
-  - Deals (*like "Opportunities"*)
-  - Email messages (*sync with user email accounts*)
-  - Products (*goods and services*)
-  - Payments (*received, guaranteed, high and low probability*)
-  - ... (*+ 12 more <a href="https://github.com/DjangoCRM/django-crm/tree/main/crm/models" target="_blank">models</a>*)
-[<img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/pics/income_summary_thumbnail.png" alt="Analytical crm report" align="right" width="190px" style="float: right"/>](https://github.com/DjangoCRM/django-crm/blob/main/docs/pics/income_summary_screenshot.png)
-- **ANALYTICS app**: ([detailed software overview](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_analytics_app_overview.md))
-  - Income Summary report (*see [screenshot](https://github.com/DjangoCRM/django-crm/blob/main/docs/pics/income_summary_screenshot.png)*)
-  - Sales funnel report
-  - Lead source Summary report
-  - ... (+ *5 more analytical reports*)
-- **MASS MAIL app** ([Email Marketing Software](https://github.com/DjangoCRM/django-crm/blob/main/massmail/README.md)):
-  - Email Accounts (*any providers with access via SMTP*)
-  - Email Messages (*newsletters*)
-  - Email Signatures (*user signatures*)
-  - Mailings (*email campaigns using dynamic templates*)
-
-## Supporting Applications
-
-The CRM package also contains **supporting applications** such as:
-
-- Chat app (chat is available in every instance of a task, project, office memo and deal)
-- VoIP app (contact clients from deals)
-- Help app (dynamic help pages depending on user role)
-- Common app:
-  - 🪪 User profiles
-  - ⏰ Reminders (for tasks, projects, office memos and deals)
-  - 📝 Tags (for tasks, projects, office memos and deals)
-  - 📂 Files (for tasks, projects, office memos and deals)
-
-## Additional Functionality
-
-- Web form integration: CRM contact form has built-in:
-  - reCAPTCHA v3 protection
-  - automatic geolocation
-- User's email account integration and synchronization. Email messages are automatic:
-  - saved in the CRM database
-  - linked to the appropriate CRM objects (like: requests, leads, deals, etc.)
-- VoIP callback to smartphone
-- Sending messages via messengers (like: Viber, WhatsApp, ...)
-- Excel Support: Import/export contact details with ease.
-
-## Email Client
-
-Python CRM with email integration includes a built-in **email client** that works via **SMTP** and **IMAP** protocols with any email service provider (e.g. Gmail). It also supports two-step authentication using the **OAuth 2.0** protocol for third-party applications if required. This enables Django-CRM to automatically store copies of all correspondence related to each request and deal within its database. The functionality ensures that even if communications occur through the user's external email account (outside the CRM).  
-They are captured and organized within the system using a **ticketing mechanism**.
-
-## Mailing CRM
-
-The CRM system includes a **bulk mailing** feature that allows users to send personalized newsletters to their contacts.  
-Customer segmentation features allow you to create targeted email marketing campaigns, and these can be managed directly within the CRM interface.
-
-## REST API
-
-Django-CRM includes a comprehensive **REST API** built with Django REST Framework, enabling integration with mobile apps, third-party services, and custom frontends.
-
-### API Features
-
-- ✅ **JWT Authentication** - Secure token-based authentication for mobile apps
-- ✅ **Full CRUD Operations** - Create, read, update, delete for all CRM entities
-- ✅ **Department-Based Permissions** - Access control based on user groups/departments
-- ✅ **Advanced Filtering & Search** - Filter by multiple fields, search across models
-- ✅ **Pagination** - Efficient handling of large datasets
-- ✅ **API Documentation** - Interactive Swagger/OpenAPI documentation
-- ✅ **File Upload Support** - Attach files to tasks, deals, and chat messages
-
-### Available Endpoints
-
-**Authentication:**
-- `POST /api/auth/login/` - Login and get JWT tokens + user data
-- `POST /api/auth/refresh/` - Refresh access token
-- `GET /api/auth/users/` - List users (excluding admin) for task assignment
-
-**CRM Entities:**
-- `GET/POST /api/companies/` - Companies management
-- `GET/POST /api/contacts/` - Contact persons management
-- `GET/POST /api/deals/` - Deals/opportunities management
-- `POST /api/deals/{id}/change_stage/` - Change deal stage
-- `GET/POST /api/leads/` - Leads management
-- `GET/POST /api/requests/` - Commercial requests
-- `GET /api/products/` - Products catalog (read-only)
-- `GET/POST /api/payments/` - Payment tracking
-
-**Tasks & Projects:**
-- `GET/POST /api/tasks/` - Task management
-- `GET /api/tasks/?assigned_to_me=true` - Filter tasks by assignment
-- `POST /api/tasks/{id}/mark_complete/` - Mark task as complete
-- `GET/POST /api/projects/` - Project management
-- `GET/POST /api/memos/` - Office memos
-
-**Chat & Messaging:**
-- `GET/POST /api/chat/` - Chat messages
-- `GET /api/chat/for_object/` - Messages for specific objects (tasks, deals)
-
-### API Documentation
-
-When the server is running, access interactive API documentation at:
-- **Swagger UI**: `http://localhost:8000/api/docs/`
-- **OpenAPI Schema**: `http://localhost:8000/api/schema/`
-
-### Quick Start with API
-
-```bash
-# Start the server
-python manage.py runserver
-
-# Test login endpoint
-curl -X POST http://localhost:8000/api/auth/login/ \
-  -H "Content-Type: application/json" \
-  -d '{"username": "your_user", "password": "your_pass"}'
-
-# Get companies (with token)
-curl -X GET http://localhost:8000/api/companies/ \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+┌─────────────────┐
+│  React Web App  │  (3piller - Customer-facing portal)
+│   (3piller)     │
+└────────┬────────┘
+         │ HTTP/REST API
+         ▼
+┌─────────────────┐
+│  Django Backend │  ← You are here (3pillars-backend)
+│   (This Repo)    │
+└────────┬────────┘
+         │
+         ├──► Flutter Mobile App (Staff/Team management)
+         ├──► Firebase Cloud Messaging (Push notifications)
+         ├──► Yoco Payment Gateway (Multi-tenant payments)
+         └──► Courier Guy / Pudo (Shipping integration)
 ```
 
-### Mobile App Integration
+---
 
-The API is designed for mobile app integration (Flutter, React Native, etc.):
+## 🚀 Key Features
 
-- **JWT Tokens** - Secure, stateless authentication
-- **CORS Enabled** - Cross-origin requests for web/mobile apps
-- **RESTful Design** - Standard HTTP methods and status codes
-- **Error Handling** - Detailed error messages for debugging
-- **File Uploads** - Multipart form data support for images/audio
+### Core CRM Functionality
+- ✅ **Deal Management** - Track sales opportunities and deals
+- ✅ **Contact & Company Management** - Comprehensive customer database
+- ✅ **Task & Project Management** - Team collaboration and workflow
+- ✅ **Chat & Messaging** - Internal communication system
+- ✅ **Lead Management** - Convert leads to deals
+- ✅ **Analytics & Reporting** - Sales funnel, income summary, lead sources
 
-For detailed API documentation, see:
-- [API Setup Guide](../API_SETUP_GUIDE.md) - Complete API setup and integration guide
-- [Backend API Summary](../BACKEND_API_SUMMARY.md) - API implementation details
-- [API Tests](../API_TESTS_SUMMARY.md) - API test suite documentation
+### Multi-Tenant E-Commerce
+- ✅ **Company-Scoped Products** - Each business manages their own catalog
+- ✅ **Shopping Cart System** - Server-side cart management
+- ✅ **Order Management** - Complete order lifecycle
+- ✅ **Payment Integration** - Yoco payment gateway (per company)
+- ✅ **Shipping Integration** - Courier Guy / Pudo pickup points (per company)
+- ✅ **Sales Analytics** - Revenue tracking, top products, trends
 
-## User Assistance  
+### Business Registration & Onboarding
+- ✅ **Business Registration** - Complete registration workflow
+- ✅ **Product Assignment** - Automatic product linking (e.g., micro-sites)
+- ✅ **Deal Creation** - Automatic deal creation for approval
+- ✅ **Staff Notifications** - Chat messages + Firebase push notifications
+- ✅ **Company Activation** - Automatic activation when deal is completed
 
-- Each CRM page includes a link <img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/site/icons/question-mark.svg" alt="question-mark icon" style="vertical-align: bottom" width="25" height="25"> to a context-aware help page, with content dynamically tailored to the user's role for more relevant guidance.  
-- Tooltips are available throughout the interface, providing instant information when hovering over elements like icons, buttons, links, or table headers.  
-- A comprehensive [user guide](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_user_guide.md) file is also included for in-depth reference and support.  
+### Real-Time Notifications
+- ✅ **Firebase Cloud Messaging** - Push notifications to mobile app
+- ✅ **Per-User Settings** - Customizable notification preferences
+- ✅ **Company-Scoped** - Notifications filtered by company context
+- ✅ **Multiple Notification Types** - Deal updates, task assignments, messages
 
-## Elevate Your Team's Productivity with Collaborative CRM Solutions
+### REST API
+- ✅ **JWT Authentication** - Secure token-based auth
+- ✅ **Full CRUD Operations** - Complete API for all entities
+- ✅ **Advanced Filtering** - Search and filter capabilities
+- ✅ **File Uploads** - Support for images, audio, documents
+- ✅ **API Documentation** - Swagger/OpenAPI docs
 
-The [CRM Task management](https://djangocrm.github.io/info/features/tasks-app-features/) is designed to enhance collaboration within teams and streamline project management processes.  
-As a collaborative CRM, it allows users to create and manage memos, tasks, and projects with ease.  
-[Office memos](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_memo_features.md) can be directed to department heads or company executives, who can then transform these memos into tasks or projects, assigning responsible persons or executors.  
-[Tasks](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_task_features.md) can be individual or team.  
-Tasks provide features such as chat discussions, reminders, file sharing, creating subtasks, and sharing results.  
-Users receive notifications directly in the CRM and via email, ensuring they stay informed.  
-Each user has a clear view of their task stack, including priorities, statuses, and next steps, thereby enhancing productivity and accountability in collaborative customer relationship management.
+---
 
-## Project Localization
+## 📋 Technology Stack
 
-<img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/site/icons/languages.svg" alt="django logo" width="30" height="30" style="vertical-align: bottom"> Customer service software is now available in **many languages:**  
+- **Framework**: Django 5.2.8+ (Python 3.11+)
+- **API**: Django REST Framework
+- **Authentication**: JWT (Simple JWT)
+- **Database**: SQLite (dev) / MySQL (PythonAnywhere) / PostgreSQL
+- **Real-Time**: Firebase Cloud Messaging
+- **Payments**: Yoco Payment Gateway
+- **Shipping**: Courier Guy / Pudo
+- **Deployment**: PythonAnywhere ready
 
-`ar, cs, de, el, en, es, fr, he, hi, id, it, ja, ko, nl, pl, pt-br, ro, ru, tr, uk, vi, zh-hans`
+---
 
-Django CRM has full support for translation of interface, formatting of dates, times, and time zones.  
+## 🏗️ Project Structure
 
-## Why Choose Django-CRM?
+```
+3pillars-backend/
+├── api/              # REST API endpoints
+├── crm/              # Core CRM models (Deals, Contacts, Companies)
+├── common/           # Shared models (Products, Departments, Users)
+├── ecommerce/          # Multi-tenant e-commerce
+├── fcm/              # Firebase Cloud Messaging
+├── tasks/            # Task & project management
+├── chat/             # Internal messaging
+├── analytics/        # Sales analytics & reports
+├── massmail/         # Email marketing
+├── webcrm/           # Django settings & configuration
+└── docs/             # Documentation
+```
 
-- **Self-Hosting**: The CRM application software is designed to be self-hosted, allowing you to have full control over your CRM data and environment. By self-hosting, you can customize the CRM to fit your specific business needs and ensure that your data remains private and secure.
-- **Collaborative CRM**: Boost team productivity with tools for task management, project collaboration, and internal communication.
-- **Automated email system**: Email marketing CRM integration and automatically saving copies of all correspondence associated with each request and deal in its database.
-- **Analytical CRM**: Gain actionable insights with built-in reports like sales funnel, income summary, and lead source analysis.
-- **Python and Django-Based**: No learning of a proprietary framework is required - all built on Django with an intuitive admin interface. The frontend and backend, based on Django Admin, make it much easier customization and development projects, as well as deploy and maintain a production server.
+---
 
-## Getting Started
+## 🚀 Quick Start
 
-Django-CRM can be easily deployed as a regular Django project with fixtures loaded to initially populate the database.  
-For first-time exploration of the CRM (not for regular use), no database installation is required—simply use Python's built-in SQLite3 with default settings.
+### Prerequisites
+- Python 3.11+
+- pip
+- Virtual environment (recommended)
 
-📚 Please refer to:
+### Installation
 
-- [Installation and Configuration Guide](https://github.com/DjangoCRM/django-crm/blob/main/docs/installation_and_configuration_guide.md)
-- [User Guide](https://github.com/DjangoCRM/django-crm/blob/main/docs/django-crm_user_guide.md)
-- [REST API Documentation](../API_SETUP_GUIDE.md) - Complete API setup and integration guide
-- or visit <a href="https://django-crm-admin.readthedocs.io" target="_blank">Read The Docs</a>
-- For unreleased changes, see [CHANGELOG](https://github.com/DjangoCRM/django-crm/blob/main/CHANGELOG.md)
+1. **Clone the repository:**
+   ```bash
+   git clone git@github.com:JBeggs/3pillars-backend.git
+   cd 3pillars-backend
+   ```
 
-If you find Django-CRM helpful, please ⭐️ **star** this repo on GitHub to support its growth!
+2. **Create and activate virtual environment:**
+   ```bash
+   python3.11 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-### Compatibility
+3. **Install dependencies:**
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
 
-- <img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/site/icons/django-logo.svg" alt="django logo" width="30" height="30" style="vertical-align: middle"> Django 5.1.13, 5.2.7+ (LTS - long-term support release)
-- <img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/site/icons/python-logo.svg" alt="python logo" width="30" height="30" style="vertical-align: middle"> Python 3.10+
-- <img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/site/icons/mysql_logo.svg" alt="mysql logo" width="30" height="30" style="vertical-align: middle"> MySQL 8.0.11+
-- <img src="https://github.com/DjangoCRM/django-crm/raw/main/docs/site/icons/postgresql_logo.svg" alt="postgresql logo" width="30" height="30" style="vertical-align: middle"> PostgreSQL 14+  
+4. **Set up environment variables:**
+   ```bash
+   cp .env.example .env  # Create .env file
+   # Edit .env with your settings
+   ```
 
-## Contributing
+5. **Run migrations:**
+   ```bash
+   python manage.py migrate
+   ```
 
-Contributions are welcome! There is room for improvements and new features.  
-Check out our [Contributing Guide](https://github.com/DjangoCRM/django-crm/blob/main/CONTRIBUTING.md) to learn how to get started.  
-Every contribution, big or small, makes a difference.
+6. **Create superuser:**
+   ```bash
+   python manage.py createsuperuser
+   ```
 
-## License
+7. **Create default products:**
+   ```bash
+   python manage.py create_default_products
+   ```
 
-Django-CRM is released under the AGPL-3.0 license - see the [LICENSE](https://github.com/DjangoCRM/django-crm/blob/main/LICENSE) file for details.
+8. **Run development server:**
+   ```bash
+   python manage.py runserver
+   ```
 
-## Credits
+9. **Access the application:**
+   - Admin Panel: http://localhost:8000/admin/
+   - API: http://localhost:8000/api/
+   - API Docs: http://localhost:8000/api/docs/
 
-- Google material <a href="https://fonts.google.com/icons" target="_blank">icons</a>.
-- <a href="https://nicedit.com" target="_blank">NicEdit</a> - WYSIWYG Content Editor.
-- All resources used under other licenses.
+---
+
+## 📚 Documentation
+
+### Setup & Configuration
+- **[Local Setup Guide](docs/setup/LOCAL_SETUP.md)** - Setting up for local development
+- **[PythonAnywhere Deployment](docs/deployment/PYTHONANYWHERE_QUICK_START.md)** - Deploy to PythonAnywhere
+- **[Deployment Checklist](docs/deployment/DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
+
+### Integrations
+- **[Firebase Setup](docs/integrations/FIREBASE_SETUP.md)** - Configure Firebase Cloud Messaging
+- **[FCM Integration](docs/integrations/FCM_INTEGRATION.md)** - Push notification setup
+- **[FCM Notification Settings](docs/integrations/FCM_NOTIFICATION_SETTINGS.md)** - User notification preferences
+- **[Email Setup](docs/integrations/EMAIL_SETUP.md)** - Configure email sending
+
+### Troubleshooting
+- **[Database Connection Issues](docs/troubleshooting/DATABASE_CONNECTION_TROUBLESHOOTING.md)** - Fix database connection problems
+- **[Database Timeout Fix](docs/troubleshooting/DATABASE_CONNECTION_TIMEOUT_FIX.md)** - Resolve timeout errors
+- **[503 Error Fix](docs/troubleshooting/FIX_503_ERROR.md)** - Fix 503 service unavailable errors
+- **[Run Migrations](docs/troubleshooting/RUN_MIGRATIONS_NOW.md)** - Migration troubleshooting
+- **[Run Setup Data](docs/troubleshooting/RUN_SETUPDATA_LOCALLY.md)** - Initial data setup
+
+### Architecture & Features
+- **[Multi-Tenancy Impact](docs/MULTI_TENANCY_IMPACT.md)** - Understanding multi-tenant architecture
+- **[Multi-Tenant Setup Complete](docs/MULTI_TENANT_SETUP_COMPLETE.md)** - Multi-tenant implementation details
+
+### Documentation Index
+- **[Complete Documentation Index](docs/README.md)** - Browse all documentation organized by category
+
+---
+
+## 🔌 API Endpoints
+
+### Authentication
+- `POST /api/auth/login/` - Login and get JWT tokens
+- `POST /api/auth/refresh/` - Refresh access token
+- `POST /api/auth/register/` - Business registration
+- `GET /api/auth/users/` - List users
+
+### CRM
+- `GET/POST /api/companies/` - Companies
+- `GET/POST /api/contacts/` - Contacts
+- `GET/POST /api/deals/` - Deals/Opportunities
+- `GET/POST /api/leads/` - Leads
+- `GET/POST /api/requests/` - Commercial requests
+
+### Tasks & Projects
+- `GET/POST /api/tasks/` - Tasks
+- `GET/POST /api/projects/` - Projects
+- `GET/POST /api/memos/` - Office memos
+
+### E-Commerce (Multi-Tenant)
+- `GET/POST /api/v1/products/` - Products (company-scoped)
+- `GET/POST /api/v1/categories/` - Categories (company-scoped)
+- `GET/POST /api/v1/carts/` - Shopping carts
+- `GET/POST /api/v1/orders/` - Orders
+
+### Chat & Messaging
+- `GET/POST /api/chat/` - Chat messages
+- `GET /api/chat/for_object/` - Messages for specific objects
+
+### Firebase (FCM)
+- `POST /api/fcm/register/` - Register device token
+- `GET /api/fcm/settings/` - Get notification settings
+- `PUT /api/fcm/settings/` - Update notification settings
+
+**Full API Documentation**: http://localhost:8000/api/docs/ (when server is running)
+
+---
+
+## 🔐 Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+# Django Settings
+SECRET_KEY=your-secret-key-here
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1,192.168.1.100
+
+# Database (SQLite for local dev)
+# For MySQL/PostgreSQL, set DATABASE_URL or individual DB_* variables
+
+# Firebase
+FIREBASE_CREDENTIALS_PATH=./firebase-service-account.json
+
+# Email (optional)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+```
+
+---
+
+## 🏢 Multi-Tenancy
+
+This system uses **selective multi-tenancy**:
+
+- **E-Commerce App**: Fully multi-tenant (products, orders, carts are company-scoped)
+- **FCM Notifications**: Company-scoped (notifications filtered by company)
+- **Payment/Shipping**: Company-scoped (each company has their own credentials)
+- **Core CRM**: NOT multi-tenant (tasks, deals, contacts are shared)
+
+Company context is determined via:
+1. `X-Company-Id` header (primary method)
+2. User's owned company (fallback)
+3. Query parameter (for superusers only)
+
+---
+
+## 🔔 Business Registration Workflow
+
+When a business registers via the web app:
+
+1. **User & Company Created** - New user account and `EcommerceCompany` record
+2. **Product Assigned** - Default product (e.g., "micro-sites") linked to company
+3. **Deal Created** - Registration deal created for approval workflow
+4. **Staff Notified** - Chat message + Firebase push notification to all staff
+5. **Company Activated** - When deal is marked as "won", company status changes to "active"
+
+---
+
+## 📱 Mobile App Integration
+
+The backend powers a **Flutter mobile app** for staff/team management:
+
+- Real-time deal and task management
+- Chat and messaging with file attachments
+- Push notifications via Firebase
+- Deal approval workflows (e.g., micro-sites approval)
+- Task creation from deals with product details
+
+---
+
+## 🌐 Web App Integration
+
+The backend powers a **React web app** (3piller) for customer interactions:
+
+- Business registration
+- Service requests
+- Product management (for registered businesses)
+- Customer dashboard
+
+---
+
+## 🚢 Deployment
+
+### PythonAnywhere
+
+See **[PythonAnywhere Quick Start](docs/deployment/PYTHONANYWHERE_QUICK_START.md)** for detailed deployment instructions.
+
+Quick steps:
+1. Clone repository
+2. Create virtual environment
+3. Install dependencies
+4. Configure `.env` file
+5. Run migrations
+6. Collect static files
+7. Configure WSGI file
+8. Map static/media files
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+python manage.py test
+
+# Run specific app tests
+python manage.py test api
+python manage.py test ecommerce
+```
+
+---
+
+## 📦 Dependencies
+
+Key dependencies:
+- Django 5.2.8+
+- Django REST Framework 3.15.2
+- djangorestframework-simplejwt 5.3.1
+- firebase-admin 6.5.0
+- django-cors-headers 4.3.1
+- pymysql 1.1.0 (for PythonAnywhere MySQL)
+
+See `requirements.txt` for complete list.
+
+---
+
+## 🤝 Contributing
+
+This is a private repository for the Three Pillars business system. For internal development:
+
+1. Create a feature branch
+2. Make your changes
+3. Test thoroughly
+4. Submit for review
+
+---
+
+## 📄 License
+
+This project is proprietary software for Three Pillars business operations.
+
+---
+
+## 🔗 Related Repositories
+
+- **3piller** - React web application (customer-facing)
+- **flutter_crm** - Flutter mobile application (staff/team)
+
+---
+
+## 📞 Support
+
+For issues or questions:
+- Check the [documentation](docs/) first
+- Review [troubleshooting guides](docs/troubleshooting/)
+- Check error logs in Django admin
+
+---
+
+## 🎯 Project Status
+
+See [DEVELOPMENT_STATUS.md](../DEVELOPMENT_STATUS.md) in the parent directory for current development status and roadmap.
+
+---
+
+**Built with ❤️ for Three Pillars Business**

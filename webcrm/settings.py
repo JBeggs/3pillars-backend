@@ -412,9 +412,9 @@ INDEX_TITLE = _('Main Menu')
 MAILING = True
 
 # This is copyright information. Please don't change it!
-COPYRIGHT_STRING = f"Django-CRM. Copyright (c) {dt.now().year}"
-PROJECT_NAME = "Django-CRM"
-PROJECT_SITE = "https://djangocrm.github.io/info/"
+COPYRIGHT_STRING = f"Three Pillars Backend. Copyright (c) {dt.now().year}"
+PROJECT_NAME = "Three Pillars Backend"
+PROJECT_SITE = "https://github.com/JBeggs/3pillars-backend"
 
 
 TESTING = sys.argv[1:2] == ['test']

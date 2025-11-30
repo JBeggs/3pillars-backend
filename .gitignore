@@ -66,6 +66,7 @@ crm_db
 # CRM stuff:
 local_settings.py
 media/
+staticfiles/
 static/admin/
 
 # Flask stuff:
@@ -133,3 +134,19 @@ dmypy.json
 .vscode/
 pytest.ini
 .push.settings.jsonc
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# PythonAnywhere specific
+*.pyc
+*.pyo
+*.pyd
+.Python

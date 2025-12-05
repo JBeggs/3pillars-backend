@@ -463,7 +463,9 @@ SIMPLE_JWT = {
 
 # CORS Settings (for React frontend and Flutter app)
 CORS_ALLOWED_ORIGINS = [
-    # React frontend (3piller) - Production
+    # React frontend (3piller) - Production (Vercel)
+    "https://3pillars-frontend.vercel.app",
+    # React frontend (3piller) - Production (PythonAnywhere)
     "https://3pillars.pythonanywhere.com",
     # React frontend (3piller) - Local development
     "http://localhost:3000",

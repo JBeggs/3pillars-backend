@@ -178,34 +178,23 @@ class ArticleViewSet(CompanyScopedViewSet):
         if not company:
             if self.request.user.is_superuser:
                 return queryset
-            return queryset.none()
-        
-        # Filter by company - authenticated users see ALL articles from the company
-        # Business owners/authors can see all company articles, not just their own
-        queryset = queryset.filter(company=company)
+            # If no company context but user is authenticated, show their own articles
+            if self.request.user.is_authenticated:
+                queryset = queryset.filter(author=self.request.user)
+            else:
+                return queryset.none()
+        else:
+            # Filter by company - ALL authenticated users see ALL articles from the company
+            queryset = queryset.filter(company=company)
         
         # Filter by status based on user permissions
         if not self.request.user.is_authenticated:
             # Anonymous: only published
             queryset = queryset.filter(status='published')
         else:
-            # Check user profile role
-            if hasattr(self.request.user, 'news_profile'):
-                profile = self.request.user.news_profile
-                if profile.role in ['admin', 'editor']:
-                    # Admins/editors see all
-                    pass
-                elif profile.role == 'author':
-                    # Authors see published + their own
-                    queryset = queryset.filter(
-                        Q(status='published') | Q(author=self.request.user)
-                    )
-                else:
-                    # Regular users only see published
-                    queryset = queryset.filter(status='published')
-            else:
-                # No profile = regular user
-                queryset = queryset.filter(status='published')
+            # ALL authenticated users (including business owners) see ALL articles regardless of status
+            # This allows business owners to see and edit all company articles
+            pass  # No status filtering for authenticated users - they see everything
         
         return queryset
     

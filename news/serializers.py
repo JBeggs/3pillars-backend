@@ -115,20 +115,35 @@ class MediaSerializer(serializers.ModelSerializer):
         # If file_url is relative, make it absolute
         if data.get('file_url') and not data['file_url'].startswith('http'):
             if request:
+                # Use request to build absolute URI
                 data['file_url'] = request.build_absolute_uri(data['file_url'])
             else:
                 # Fallback: construct from settings
                 from django.conf import settings
+                # Try to get domain from settings
                 domain = getattr(settings, 'SITE_DOMAIN', None)
                 if not domain:
+                    # Check ALLOWED_HOSTS for production domain
                     allowed_hosts = getattr(settings, 'ALLOWED_HOSTS', [])
                     if allowed_hosts:
-                        host = allowed_hosts[0]
-                        protocol = 'https' if 'pythonanywhere.com' in host or '.' in host else 'http'
+                        # Prefer PythonAnywhere domain if available
+                        pythonanywhere_host = next(
+                            (h for h in allowed_hosts if 'pythonanywhere.com' in h),
+                            allowed_hosts[0]
+                        )
+                        host = pythonanywhere_host
+                        # Use https for production domains, http for localhost
+                        protocol = 'https' if 'pythonanywhere.com' in host or ('.' in host and 'localhost' not in host and '127.0.0.1' not in host) else 'http'
                         domain = f'{protocol}://{host}'
                     else:
                         domain = 'http://localhost:8000'
-                data['file_url'] = f'{domain}{data["file_url"]}'
+                
+                # Ensure relative URL starts with /
+                relative_url = data['file_url']
+                if not relative_url.startswith('/'):
+                    relative_url = '/' + relative_url
+                
+                data['file_url'] = f'{domain}{relative_url}'
         
         return data
     

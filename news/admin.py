@@ -57,24 +57,113 @@ class ArticleAdmin(admin.ModelAdmin):
     list_display = ['title', 'company', 'author', 'status', 'is_premium', 'views', 'published_at', 'created_at']
     list_filter = ['company', 'status', 'is_premium', 'is_breaking_news', 'is_trending', 'created_at']
     search_fields = ['title', 'subtitle', 'excerpt', 'content']
-    readonly_fields = ['views', 'likes', 'shares', 'version', 'created_at', 'updated_at']
+    readonly_fields = ['id', 'views', 'likes', 'shares', 'version', 'created_at', 'updated_at']
     date_hierarchy = 'published_at'
+    raw_id_fields = ['company', 'author', 'featured_media', 'category', 'social_image', 'parent_version']
+    filter_horizontal = ['co_authors', 'tags']
+    fieldsets = (
+        (_('Basic Information'), {
+            'fields': ('title', 'slug', 'subtitle', 'excerpt', 'content', 'content_type')
+        }),
+        (_('Author & Category'), {
+            'fields': ('author', 'co_authors', 'category', 'tags')
+        }),
+        (_('Media'), {
+            'fields': ('featured_media', 'social_image'),
+            'classes': ('collapse',)
+        }),
+        (_('Status & Settings'), {
+            'fields': (
+                'status',
+                'is_premium',
+                'is_breaking_news',
+                'is_trending',
+                'published_at',
+                'scheduled_for'
+            )
+        }),
+        (_('SEO'), {
+            'fields': ('seo_title', 'seo_description'),
+            'classes': ('collapse',)
+        }),
+        (_('Location'), {
+            'fields': ('location_name',),
+            'classes': ('collapse',)
+        }),
+        (_('Statistics'), {
+            'fields': ('views', 'likes', 'shares', 'read_time_minutes'),
+            'classes': ('collapse',)
+        }),
+        (_('Versioning'), {
+            'fields': ('version', 'parent_version'),
+            'classes': ('collapse',)
+        }),
+        (_('Metadata'), {
+            'fields': ('id', 'company', 'created_at', 'updated_at', 'deleted_at'),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     list_display = ['article', 'author_name', 'author', 'is_approved', 'is_spam', 'created_at']
-    list_filter = ['is_approved', 'is_spam', 'created_at']
-    search_fields = ['content', 'author_name', 'author_email']
-    readonly_fields = ['created_at', 'updated_at']
+    list_filter = ['article__company', 'is_approved', 'is_spam', 'created_at']
+    search_fields = ['content', 'author_name', 'author_email', 'article__title']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    raw_id_fields = ['article', 'author', 'parent']
+    fieldsets = (
+        (_('Comment'), {
+            'fields': ('article', 'content', 'author_name', 'author_email', 'author', 'parent')
+        }),
+        (_('Moderation'), {
+            'fields': ('is_approved', 'is_spam')
+        }),
+        (_('Metadata'), {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 @admin.register(Business)
 class BusinessAdmin(admin.ModelAdmin):
     list_display = ['name', 'company', 'industry', 'is_verified', 'rating', 'review_count', 'created_at']
     list_filter = ['company', 'industry', 'is_verified', 'created_at']
-    search_fields = ['name', 'description', 'industry', 'city', 'state']
-    readonly_fields = ['rating', 'review_count', 'created_at', 'updated_at']
+    search_fields = ['name', 'description', 'long_description', 'industry', 'city', 'state', 'address', 'email', 'phone']
+    readonly_fields = ['id', 'rating', 'review_count', 'created_at', 'updated_at']
+    raw_id_fields = ['company', 'owner', 'logo', 'cover_image']
+    fieldsets = (
+        (_('Basic Information'), {
+            'fields': ('name', 'slug', 'description', 'long_description', 'industry', 'company', 'owner')
+        }),
+        (_('Contact Information'), {
+            'fields': ('email', 'phone', 'website_url', 'address', 'city', 'state', 'zip_code')
+        }),
+        (_('Media'), {
+            'fields': ('logo', 'cover_image'),
+            'classes': ('collapse',)
+        }),
+        (_('Additional Information'), {
+            'fields': ('business_hours', 'social_links', 'services'),
+            'classes': ('collapse',)
+        }),
+        (_('Verification & Status'), {
+            'fields': ('is_verified',)
+        }),
+        (_('SEO'), {
+            'fields': ('seo_title', 'seo_description'),
+            'classes': ('collapse',)
+        }),
+        (_('Statistics'), {
+            'fields': ('rating', 'review_count'),
+            'classes': ('collapse',)
+        }),
+        (_('Metadata'), {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 @admin.register(BusinessReview)

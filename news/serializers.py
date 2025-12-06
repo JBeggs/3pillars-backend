@@ -63,16 +63,43 @@ class TagSerializer(serializers.ModelSerializer):
 class MediaSerializer(serializers.ModelSerializer):
     """Serializer for Media."""
     uploaded_by_name = serializers.CharField(source='uploaded_by.get_full_name', read_only=True)
+    file = serializers.FileField(write_only=True, required=False)
     
     class Meta:
         model = Media
         fields = [
-            'id', 'company', 'filename', 'original_filename', 'file_path', 'file_url',
+            'id', 'company', 'file', 'filename', 'original_filename', 'file_path', 'file_url',
             'file_size', 'mime_type', 'media_type', 'width', 'height', 'duration_seconds',
             'alt_text', 'caption', 'uploaded_by', 'uploaded_by_name', 'is_public',
             'metadata', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'file_path', 'file_url', 'created_at', 'updated_at']
+    
+    def create(self, validated_data):
+        """Handle file upload and generate file_path and file_url."""
+        file = validated_data.pop('file', None)
+        if file:
+            # Generate filename if not provided
+            if not validated_data.get('filename'):
+                validated_data['filename'] = file.name
+            if not validated_data.get('original_filename'):
+                validated_data['original_filename'] = file.name
+            if not validated_data.get('mime_type'):
+                validated_data['mime_type'] = file.content_type or 'application/octet-stream'
+            if not validated_data.get('file_size'):
+                validated_data['file_size'] = file.size
+            
+            # Generate file path and URL
+            import os
+            from django.core.files.storage import default_storage
+            from django.conf import settings
+            
+            # Save file to storage
+            file_path = default_storage.save(f'media/{validated_data["filename"]}', file)
+            validated_data['file_path'] = file_path
+            validated_data['file_url'] = default_storage.url(file_path)
+        
+        return super().create(validated_data)
 
 
 class GalleryMediaSerializer(serializers.ModelSerializer):

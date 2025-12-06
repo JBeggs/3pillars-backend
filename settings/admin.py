@@ -70,6 +70,8 @@ class StopPhraseAdmin(admin.ModelAdmin):
 crm_site.register(BannedCompanyName, BannedCompanyNameAdmin)
 crm_site.register(PublicEmailDomain, PublicEmailDomainAdmin)
 crm_site.register(StopPhrase, StopPhraseAdmin)
+crm_site.register(MassmailSettings, MassmailSettingsAdmin)
+crm_site.register(Reminders, RemindersAdmin)
 
 admin.site.register(BannedCompanyName, BannedCompanyNameAdmin)
 admin.site.register(MassmailSettings, MassmailSettingsAdmin)

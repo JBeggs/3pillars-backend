@@ -166,3 +166,4 @@ admin.site.register(Page, PageAdmin)
 admin.site.register(Paragraph, ParagraphAdmin)
 
 crm_site.register(Page, pageadmin.PageAdmin)
+crm_site.register(Paragraph, ParagraphAdmin)

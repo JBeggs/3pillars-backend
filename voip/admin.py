@@ -1,5 +1,6 @@
 from django.contrib import admin
 from crm.utils.admfilters import ScrollRelatedOnlyFieldListFilter
+from crm.site.crmadminsite import crm_site
 from voip.models import Connection
 
 
@@ -23,3 +24,4 @@ class ConnectionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Connection, ConnectionAdmin)
+crm_site.register(Connection, ConnectionAdmin)

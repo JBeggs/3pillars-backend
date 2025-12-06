@@ -337,7 +337,8 @@ NOT_ALLOWED_EMAILS = []
 # List of applications on the main page and in the left sidebar.
 APP_ON_INDEX_PAGE = [
     'tasks', 'crm', 'analytics',
-    'massmail', 'common', 'settings'
+    'massmail', 'common', 'settings',
+    'news', 'ecommerce', 'fcm'
 ]
 MODEL_ON_INDEX_PAGE = {
     'tasks': {

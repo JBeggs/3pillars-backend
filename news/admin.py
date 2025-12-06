@@ -3,6 +3,9 @@ Admin configuration for news platform models.
 """
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+from django import forms
+from django.core.files.storage import default_storage
+from django.conf import settings
 from crm.site.crmadminsite import crm_site
 from .models import (
     Profile, Category, Tag, Media, Gallery, GalleryMedia,
@@ -37,12 +40,92 @@ class TagAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at']
 
 
+class MediaAdminForm(forms.ModelForm):
+    """Custom form for Media admin with file upload support."""
+    file = forms.FileField(required=False, help_text='Upload a new file. Leave empty to keep existing file.')
+    
+    class Meta:
+        model = Media
+        fields = '__all__'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make file required only when creating new Media
+        if not self.instance.pk:
+            self.fields['file'].required = True
+            self.fields['file_path'].required = False
+            self.fields['file_url'].required = False
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        file = self.cleaned_data.get('file')
+        
+        if file:
+            # Save file to storage
+            file_path = default_storage.save(f'media/{file.name}', file)
+            instance.file_path = file_path
+            
+            # Generate file URL
+            relative_url = default_storage.url(file_path)
+            # Build absolute URL
+            allowed_hosts = getattr(settings, 'ALLOWED_HOSTS', [])
+            if allowed_hosts:
+                host = allowed_hosts[0]
+                protocol = 'https' if 'pythonanywhere.com' in host or '.' in host else 'http'
+                instance.file_url = f'{protocol}://{host}{relative_url}'
+            else:
+                instance.file_url = f'http://localhost:8000{relative_url}'
+            
+            # Set filename and metadata if not set
+            if not instance.filename:
+                instance.filename = file.name
+            if not instance.original_filename:
+                instance.original_filename = file.name
+            if not instance.mime_type:
+                instance.mime_type = file.content_type or 'application/octet-stream'
+            if not instance.file_size:
+                instance.file_size = file.size
+            
+            # Auto-detect media type from mime type
+            if not instance.media_type:
+                mime = instance.mime_type.lower()
+                if mime.startswith('image/'):
+                    instance.media_type = 'image'
+                elif mime.startswith('video/'):
+                    instance.media_type = 'video'
+                elif mime.startswith('audio/'):
+                    instance.media_type = 'audio'
+                else:
+                    instance.media_type = 'document'
+        
+        if commit:
+            instance.save()
+        return instance
+
+
 @admin.register(Media)
 class MediaAdmin(admin.ModelAdmin):
+    form = MediaAdminForm
     list_display = ['filename', 'company', 'media_type', 'is_public', 'uploaded_by', 'created_at']
     list_filter = ['company', 'media_type', 'is_public', 'created_at']
     search_fields = ['filename', 'original_filename', 'alt_text', 'caption']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'file_url']
+    fieldsets = (
+        (None, {
+            'fields': ('company', 'file', 'media_type')
+        }),
+        (_('File Information'), {
+            'fields': ('filename', 'original_filename', 'file_path', 'file_url', 'file_size', 'mime_type'),
+            'classes': ('collapse',)
+        }),
+        (_('Media Details'), {
+            'fields': ('alt_text', 'caption', 'width', 'height', 'duration_seconds', 'uploaded_by', 'is_public')
+        }),
+        (_('Metadata'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 @admin.register(Gallery)

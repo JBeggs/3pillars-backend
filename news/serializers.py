@@ -86,6 +86,31 @@ class MediaSerializer(serializers.ModelSerializer):
             'file_size': {'required': False, 'allow_null': True},
         }
     
+    def to_representation(self, instance):
+        """Ensure file_url is always absolute."""
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        
+        # If file_url is relative, make it absolute
+        if data.get('file_url') and not data['file_url'].startswith('http'):
+            if request:
+                data['file_url'] = request.build_absolute_uri(data['file_url'])
+            else:
+                # Fallback: construct from settings
+                from django.conf import settings
+                domain = getattr(settings, 'SITE_DOMAIN', None)
+                if not domain:
+                    allowed_hosts = getattr(settings, 'ALLOWED_HOSTS', [])
+                    if allowed_hosts:
+                        host = allowed_hosts[0]
+                        protocol = 'https' if 'pythonanywhere.com' in host or '.' in host else 'http'
+                        domain = f'{protocol}://{host}'
+                    else:
+                        domain = 'http://localhost:8000'
+                data['file_url'] = f'{domain}{data["file_url"]}'
+        
+        return data
+    
     def to_internal_value(self, data):
         """Extract file and populate filename/mime_type before validation."""
         request = self.context.get('request')
@@ -140,9 +165,10 @@ class MediaSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Handle file upload and generate file_path and file_url."""
         file = validated_data.pop('file', None)
+        request = self.context.get('request')
+        
         if not file:
             # Try to get file from request.FILES
-            request = self.context.get('request')
             if request and hasattr(request, 'FILES'):
                 file = request.FILES.get('file')
         
@@ -151,11 +177,33 @@ class MediaSerializer(serializers.ModelSerializer):
         
         # Generate file path and URL
         from django.core.files.storage import default_storage
+        from django.conf import settings
         
         # Save file to storage
         file_path = default_storage.save(f'media/{validated_data["filename"]}', file)
         validated_data['file_path'] = file_path
-        validated_data['file_url'] = default_storage.url(file_path)
+        
+        # Generate absolute URL for file_url
+        relative_url = default_storage.url(file_path)
+        if request:
+            # Use request to build absolute URI
+            validated_data['file_url'] = request.build_absolute_uri(relative_url)
+        else:
+            # Fallback: construct absolute URL from settings
+            # Try to get domain from settings or use default
+            domain = getattr(settings, 'SITE_DOMAIN', None)
+            if not domain:
+                # Try to extract from ALLOWED_HOSTS or use default
+                allowed_hosts = getattr(settings, 'ALLOWED_HOSTS', [])
+                if allowed_hosts:
+                    host = allowed_hosts[0]
+                    # Use https for production domains, http for localhost
+                    protocol = 'https' if 'pythonanywhere.com' in host or '.' in host else 'http'
+                    domain = f'{protocol}://{host}'
+                else:
+                    domain = 'http://localhost:8000'
+            
+            validated_data['file_url'] = f'{domain}{relative_url}'
         
         return super().create(validated_data)
 

@@ -2,6 +2,7 @@
 Admin configuration for news platform models.
 """
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 from .models import (
     Profile, Category, Tag, Media, Gallery, GalleryMedia,
     Article, ArticleMedia, Comment, Business, BusinessMedia,
@@ -130,4 +131,102 @@ class TestimonialAdmin(admin.ModelAdmin):
     list_filter = ['company', 'is_featured', 'rating', 'created_at']
     search_fields = ['name', 'title', 'company_name', 'content']
     readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(GalleryMedia)
+class GalleryMediaAdmin(admin.ModelAdmin):
+    list_display = ['gallery', 'media', 'order', 'created_at']
+    list_filter = ['gallery__company', 'created_at']
+    search_fields = ['gallery__title', 'media__filename']
+    raw_id_fields = ['gallery', 'media']
+    readonly_fields = ['created_at']
+
+
+@admin.register(ArticleMedia)
+class ArticleMediaAdmin(admin.ModelAdmin):
+    list_display = ['article', 'media', 'order', 'is_featured', 'created_at']
+    list_filter = ['article__company', 'is_featured', 'created_at']
+    search_fields = ['article__title', 'media__filename']
+    raw_id_fields = ['article', 'media']
+    readonly_fields = ['created_at']
+
+
+@admin.register(BusinessMedia)
+class BusinessMediaAdmin(admin.ModelAdmin):
+    list_display = ['business', 'media', 'order', 'is_featured', 'created_at']
+    list_filter = ['business__company', 'is_featured', 'created_at']
+    search_fields = ['business__name', 'media__filename']
+    raw_id_fields = ['business', 'media']
+    readonly_fields = ['created_at']
+
+
+@admin.register(RSSArticleTracking)
+class RSSArticleTrackingAdmin(admin.ModelAdmin):
+    list_display = ['rss_source', 'article', 'imported_at', 'status']
+    list_filter = ['rss_source__company', 'status', 'imported_at']
+    search_fields = ['rss_source__name', 'article__title', 'external_id']
+    raw_id_fields = ['rss_source', 'article']
+    readonly_fields = ['imported_at']
+
+
+@admin.register(AudioRecording)
+class AudioRecordingAdmin(admin.ModelAdmin):
+    list_display = ['user', 'company', 'audio_url', 'duration_seconds', 'created_at']
+    list_filter = ['company', 'created_at']
+    search_fields = ['user__username', 'user__email', 'audio_url', 'transcription']
+    raw_id_fields = ['user', 'company', 'media']
+    readonly_fields = ['created_at']
+    fieldsets = (
+        (None, {
+            'fields': ('user', 'company', 'media', 'audio_url')
+        }),
+        (_('Transcription'), {
+            'fields': ('transcription', 'duration_seconds'),
+            'classes': ('collapse',)
+        }),
+        (_('Metadata'), {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(ContentImport)
+class ContentImportAdmin(admin.ModelAdmin):
+    list_display = ['company', 'filename', 'status', 'imported_articles', 'total_articles', 'created_at']
+    list_filter = ['company', 'status', 'created_at']
+    search_fields = ['filename', 'file_url', 'error_message']
+    raw_id_fields = ['user', 'company']
+    readonly_fields = ['created_at', 'updated_at']
+    fieldsets = (
+        (None, {
+            'fields': ('user', 'company', 'filename', 'file_url', 'status')
+        }),
+        (_('Import Progress'), {
+            'fields': ('imported_articles', 'total_articles', 'error_message'),
+            'classes': ('collapse',)
+        }),
+        (_('Metadata'), {
+            'fields': ('metadata', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(UserSession)
+class UserSessionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'session_id', 'ip_address', 'started_at', 'ended_at', 'page_views']
+    list_filter = ['started_at', 'ended_at']
+    search_fields = ['user__username', 'user__email', 'session_id', 'ip_address']
+    raw_id_fields = ['user']
+    readonly_fields = ['started_at']
+    fieldsets = (
+        (None, {
+            'fields': ('user', 'session_id', 'ip_address', 'user_agent')
+        }),
+        (_('Session Data'), {
+            'fields': ('started_at', 'ended_at', 'page_views'),
+            'classes': ('collapse',)
+        }),
+    )
 

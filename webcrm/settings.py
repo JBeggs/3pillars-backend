@@ -49,6 +49,10 @@ if pythonanywhere_username:
 if '3pillars.pythonanywhere.com' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('3pillars.pythonanywhere.com')
 
+# Always add riverside-herald.vercel.app if not already present
+if 'riverside-herald.vercel.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('riverside-herald.vercel.app')
+
 # Database Configuration
 # PythonAnywhere typically uses MySQL, but PostgreSQL and SQLite are also supported
 
@@ -466,6 +470,8 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     # React frontend (3piller) - Production (Vercel)
     "https://3pillars-frontend.vercel.app",
+    # Riverside Herald frontend - Production (Vercel)
+    "https://riverside-herald.vercel.app",
     # React frontend (3piller) - Production (PythonAnywhere)
     "https://3pillars.pythonanywhere.com",
     # React frontend (3piller) - Local development

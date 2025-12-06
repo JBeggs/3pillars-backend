@@ -285,15 +285,14 @@ class BusinessRegistrationSerializer(serializers.Serializer):
                 plan='free'
             )
             
-            # Create news profile for business owner (with business_owner role if needed)
-            # For now, give them 'author' role so they can manage their business content
+            # Create news profile for business owner with business_owner role
             full_name = f"{validated_data.get('first_name', '')} {validated_data.get('last_name', '')}".strip()
             Profile.objects.get_or_create(
                 user=user,
                 defaults={
                     'username': user.username,
                     'full_name': full_name or user.username,
-                    'role': 'author',  # Business owners can create content
+                    'role': 'business_owner',  # Business owners have their own role
                     'is_verified': False,
                 }
             )

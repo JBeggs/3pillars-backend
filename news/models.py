@@ -34,6 +34,7 @@ class Profile(models.Model):
         ('admin', 'Admin'),
         ('editor', 'Editor'),
         ('author', 'Author'),
+        ('business_owner', 'Business Owner'),
         ('subscriber', 'Subscriber'),
         ('premium_subscriber', 'Premium Subscriber'),
     ]

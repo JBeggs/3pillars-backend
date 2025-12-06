@@ -34,11 +34,11 @@ class HasCompanyAccess(permissions.BasePermission):
         if hasattr(company, 'users') and request.user in company.users.all():
             return True
         
-        # Allow authors, editors, and admins to create content (for news platform)
-        # Check user profile role - authors should be able to create articles
+        # Allow authors, editors, admins, and business owners to create content (for news platform)
+        # Check user profile role - authors and business owners should be able to create articles
         if hasattr(request.user, 'news_profile'):
             profile = request.user.news_profile
-            if profile.role in ['admin', 'editor', 'author']:
+            if profile.role in ['admin', 'editor', 'author', 'business_owner']:
                 return True
         
         # Superusers can access any company

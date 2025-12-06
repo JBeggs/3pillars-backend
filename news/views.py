@@ -207,23 +207,23 @@ class ArticleViewSet(CompanyScopedViewSet):
             # Authenticated users: published articles + their own drafts (or all drafts if admin/editor)
             # Check user profile role
             is_admin_or_editor = False
-            is_author = False
+            is_author_or_business_owner = False
             if hasattr(self.request.user, 'news_profile'):
                 profile = self.request.user.news_profile
                 is_admin_or_editor = profile.role in ['admin', 'editor']
-                is_author = profile.role == 'author'
+                is_author_or_business_owner = profile.role in ['author', 'business_owner']
             
             if is_admin_or_editor:
                 # Admins and editors can see all articles (published and drafts)
                 pass  # No status filtering - they see everything
-            elif is_author:
-                # Authors can see published articles + their own drafts only
+            elif is_author_or_business_owner:
+                # Authors and business owners can see published articles + their own drafts only
                 queryset = queryset.filter(
                     Q(status='published') | 
                     Q(status='draft', author=self.request.user)
                 )
             else:
-                # Other authenticated users (business owners, regular users) see only published articles
+                # Other authenticated users (regular users) see only published articles
                 queryset = queryset.filter(status='published')
         
         return queryset
@@ -759,8 +759,8 @@ class StatsViewSet(viewsets.ViewSet):
             'total_tags': Tag.objects.filter(company=company).count(),
         }
         
-        # Get user's articles if author
-        if profile.role == 'author':
+        # Get user's articles if author or business owner
+        if profile.role in ['author', 'business_owner']:
             stats['my_articles'] = Article.objects.filter(
                 company=company,
                 author=request.user

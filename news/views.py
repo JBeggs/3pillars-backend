@@ -391,6 +391,29 @@ class BusinessViewSet(CompanyScopedViewSet):
         if self.action == 'list':
             return BusinessListSerializer
         return BusinessDetailSerializer
+    
+    def perform_create(self, serializer):
+        """Set company and owner."""
+        company = get_company_from_request(self.request)
+        if not company:
+            raise PermissionDenied('Company context required. Provide X-Company-Id header.')
+        
+        # Auto-generate slug if not provided
+        if not serializer.validated_data.get('slug') and serializer.validated_data.get('name'):
+            from django.utils.text import slugify
+            base_slug = slugify(serializer.validated_data['name'])
+            slug = base_slug
+            counter = 1
+            # Ensure unique slug within company
+            while Business.objects.filter(company=company, slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            serializer.validated_data['slug'] = slug
+        
+        serializer.save(
+            company=company,
+            owner=self.request.user
+        )
 
 
 class BusinessReviewViewSet(viewsets.ModelViewSet):

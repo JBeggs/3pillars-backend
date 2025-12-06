@@ -274,12 +274,34 @@ class ArticleListSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author_name = serializers.CharField(source='author.get_full_name', read_only=True)
     featured_media = MediaSerializer(read_only=True)
+    featured_media_id = serializers.PrimaryKeyRelatedField(
+        source='featured_media',
+        queryset=Media.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    
+    def to_internal_value(self, data):
+        """Filter featured_media queryset by company and handle both field names."""
+        request = self.context.get('request')
+        company = get_company_from_request(request)
+        
+        # Handle both 'featured_media' and 'featured_media_id' field names
+        if 'featured_media' in data and 'featured_media_id' not in data:
+            data['featured_media_id'] = data.pop('featured_media')
+        
+        if 'featured_media_id' in data and company:
+            # Update queryset to filter by company
+            self.fields['featured_media_id'].queryset = Media.objects.filter(company=company)
+        
+        return super().to_internal_value(data)
     
     class Meta:
         model = Article
         fields = [
             'id', 'company', 'title', 'slug', 'subtitle', 'excerpt', 'status',
-            'category', 'tags', 'author', 'author_name', 'featured_media',
+            'category', 'tags', 'author', 'author_name', 'featured_media', 'featured_media_id',
             'is_premium', 'is_breaking_news', 'is_trending',
             'views', 'likes', 'shares', 'read_time_minutes',
             'published_at', 'created_at', 'updated_at'
@@ -293,14 +315,36 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author_name = serializers.CharField(source='author.get_full_name', read_only=True)
     featured_media = MediaSerializer(read_only=True)
+    featured_media_id = serializers.PrimaryKeyRelatedField(
+        source='featured_media',
+        queryset=Media.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
     social_image = MediaSerializer(read_only=True)
     article_media = serializers.SerializerMethodField()
+    
+    def to_internal_value(self, data):
+        """Filter featured_media queryset by company and handle both field names."""
+        request = self.context.get('request')
+        company = get_company_from_request(request)
+        
+        # Handle both 'featured_media' and 'featured_media_id' field names
+        if 'featured_media' in data and 'featured_media_id' not in data:
+            data['featured_media_id'] = data.pop('featured_media')
+        
+        if 'featured_media_id' in data and company:
+            # Update queryset to filter by company
+            self.fields['featured_media_id'].queryset = Media.objects.filter(company=company)
+        
+        return super().to_internal_value(data)
     
     class Meta:
         model = Article
         fields = [
             'id', 'company', 'title', 'slug', 'subtitle', 'excerpt', 'content',
-            'content_type', 'featured_media', 'social_image', 'author', 'author_name',
+            'content_type', 'featured_media', 'featured_media_id', 'social_image', 'author', 'author_name',
             'co_authors', 'category', 'tags', 'status', 'is_premium',
             'is_breaking_news', 'is_trending', 'seo_title', 'seo_description',
             'views', 'likes', 'shares', 'read_time_minutes', 'published_at',

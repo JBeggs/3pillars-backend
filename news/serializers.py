@@ -462,7 +462,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             'rating', 'review_count', 'seo_title', 'seo_description',
             'reviews', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'rating', 'review_count', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'owner', 'company', 'rating', 'review_count', 'created_at', 'updated_at']
     
     def get_reviews(self, obj):
         """Get approved reviews."""

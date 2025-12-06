@@ -64,6 +64,9 @@ class MediaSerializer(serializers.ModelSerializer):
     """Serializer for Media."""
     uploaded_by_name = serializers.CharField(source='uploaded_by.get_full_name', read_only=True)
     file = serializers.FileField(write_only=True, required=False)
+    filename = serializers.CharField(required=False, allow_blank=True)
+    mime_type = serializers.CharField(required=False, allow_blank=True)
+    company = serializers.PrimaryKeyRelatedField(required=False, read_only=True)
     
     class Meta:
         model = Media
@@ -73,31 +76,51 @@ class MediaSerializer(serializers.ModelSerializer):
             'alt_text', 'caption', 'uploaded_by', 'uploaded_by_name', 'is_public',
             'metadata', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'file_path', 'file_url', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'company', 'file_path', 'file_url', 'created_at', 'updated_at']
+    
+    def validate(self, attrs):
+        """Validate that file is provided if filename/mime_type are not."""
+        request = self.context.get('request')
+        file = attrs.get('file')
+        
+        # If no file in attrs, try to get from request.FILES
+        if not file and request and hasattr(request, 'FILES'):
+            file = request.FILES.get('file')
+            if file:
+                attrs['file'] = file
+        
+        # If file is provided, generate filename and mime_type if missing
+        if file:
+            if not attrs.get('filename'):
+                attrs['filename'] = file.name
+            if not attrs.get('original_filename'):
+                attrs['original_filename'] = file.name
+            if not attrs.get('mime_type'):
+                attrs['mime_type'] = file.content_type or 'application/octet-stream'
+            if not attrs.get('file_size'):
+                attrs['file_size'] = file.size
+        
+        return attrs
     
     def create(self, validated_data):
         """Handle file upload and generate file_path and file_url."""
         file = validated_data.pop('file', None)
-        if file:
-            # Generate filename if not provided
-            if not validated_data.get('filename'):
-                validated_data['filename'] = file.name
-            if not validated_data.get('original_filename'):
-                validated_data['original_filename'] = file.name
-            if not validated_data.get('mime_type'):
-                validated_data['mime_type'] = file.content_type or 'application/octet-stream'
-            if not validated_data.get('file_size'):
-                validated_data['file_size'] = file.size
-            
-            # Generate file path and URL
-            import os
-            from django.core.files.storage import default_storage
-            from django.conf import settings
-            
-            # Save file to storage
-            file_path = default_storage.save(f'media/{validated_data["filename"]}', file)
-            validated_data['file_path'] = file_path
-            validated_data['file_url'] = default_storage.url(file_path)
+        if not file:
+            # Try to get file from request.FILES
+            request = self.context.get('request')
+            if request and hasattr(request, 'FILES'):
+                file = request.FILES.get('file')
+        
+        if not file:
+            raise serializers.ValidationError({'file': 'File is required for media upload.'})
+        
+        # Generate file path and URL
+        from django.core.files.storage import default_storage
+        
+        # Save file to storage
+        file_path = default_storage.save(f'media/{validated_data["filename"]}', file)
+        validated_data['file_path'] = file_path
+        validated_data['file_url'] = default_storage.url(file_path)
         
         return super().create(validated_data)
 

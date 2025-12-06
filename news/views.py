@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.utils import timezone
 
 from .models import (
@@ -230,6 +230,59 @@ class ArticleViewSet(CompanyScopedViewSet):
         article.likes += 1
         article.save(update_fields=['likes'])
         return Response({'likes': article.likes})
+    
+    @action(detail=True, methods=['get', 'post', 'delete'], url_path='media')
+    def manage_media(self, request, pk=None):
+        """Manage article media gallery."""
+        article = self.get_object()
+        company = get_company_from_request(request)
+        
+        if request.method == 'GET':
+            # Get all media for this article
+            media_relations = article.article_media_relations.all().order_by('sort_order')
+            from .serializers import ArticleMediaSerializer
+            serializer = ArticleMediaSerializer(media_relations, many=True, context={'request': request})
+            return Response(serializer.data)
+        
+        elif request.method == 'POST':
+            # Add media to article
+            media_id = request.data.get('media_id')
+            if not media_id:
+                return Response({'error': 'media_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                media = Media.objects.get(id=media_id, company=company)
+            except Media.DoesNotExist:
+                return Response({'error': 'Media not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get max sort_order for this article
+            max_order = article.article_media_relations.aggregate(
+                max_order=Max('sort_order')
+            )['max_order'] or 0
+            
+            article_media = ArticleMedia.objects.create(
+                article=article,
+                media=media,
+                sort_order=max_order + 1,
+                caption=request.data.get('caption', '')
+            )
+            
+            from .serializers import ArticleMediaSerializer
+            serializer = ArticleMediaSerializer(article_media, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        elif request.method == 'DELETE':
+            # Remove media from article
+            media_id = request.data.get('media_id')
+            if not media_id:
+                return Response({'error': 'media_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                article_media = article.article_media_relations.get(media_id=media_id)
+                article_media.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            except ArticleMedia.DoesNotExist:
+                return Response({'error': 'Media not found in article'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class CommentViewSet(viewsets.ModelViewSet):

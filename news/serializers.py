@@ -268,6 +268,31 @@ class GallerySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
+class ArticleMediaSerializer(serializers.ModelSerializer):
+    """Serializer for Article Media relationship."""
+    media = MediaSerializer(read_only=True)
+    media_id = serializers.PrimaryKeyRelatedField(
+        source='media',
+        queryset=Media.objects.all(),
+        write_only=True
+    )
+    
+    class Meta:
+        model = ArticleMedia
+        fields = ['id', 'article', 'media', 'media_id', 'sort_order', 'caption', 'created_at']
+        read_only_fields = ['id', 'article', 'created_at']
+    
+    def to_internal_value(self, data):
+        """Filter media queryset by company."""
+        request = self.context.get('request')
+        company = get_company_from_request(request)
+        
+        if 'media_id' in data and company:
+            self.fields['media_id'].queryset = Media.objects.filter(company=company)
+        
+        return super().to_internal_value(data)
+
+
 class ArticleListSerializer(serializers.ModelSerializer):
     """Serializer for Article list view."""
     category = CategorySerializer(read_only=True)
@@ -361,7 +386,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
         return [
             {
                 'id': str(rel.media.id),
-                'media': MediaSerializer(rel.media).data,
+                'media': MediaSerializer(rel.media, context=self.context).data,
                 'sort_order': rel.sort_order,
                 'caption': rel.caption
             }
@@ -472,26 +497,29 @@ class RSSSourceSerializer(serializers.ModelSerializer):
             'last_fetched_at', 'last_error', 'fetch_interval_minutes',
             'max_articles_per_fetch', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'last_fetched_at', 'last_error', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class NotificationSerializer(serializers.ModelSerializer):
     """Serializer for Notification."""
+    
     class Meta:
         model = Notification
         fields = [
-            'id', 'user', 'company', 'type', 'title', 'message', 'data',
-            'is_read', 'created_at'
+            'id', 'company', 'user', 'type', 'title', 'message',
+            'related_object_type', 'related_object_id', 'is_read',
+            'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class SiteSettingSerializer(serializers.ModelSerializer):
     """Serializer for Site Setting."""
+    
     class Meta:
         model = SiteSetting
         fields = [
-            'id', 'company', 'key', 'value', 'description', 'type',
+            'id', 'company', 'key', 'value', 'type', 'description',
             'is_public', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -499,13 +527,13 @@ class SiteSettingSerializer(serializers.ModelSerializer):
 
 class TeamMemberSerializer(serializers.ModelSerializer):
     """Serializer for Team Member."""
-    image = MediaSerializer(read_only=True)
+    photo = MediaSerializer(read_only=True)
     
     class Meta:
         model = TeamMember
         fields = [
-            'id', 'company', 'name', 'title', 'bio', 'email', 'image',
-            'social_links', 'is_featured', 'sort_order',
+            'id', 'company', 'name', 'title', 'bio', 'photo',
+            'email', 'social_links', 'sort_order', 'is_featured',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -513,14 +541,13 @@ class TeamMemberSerializer(serializers.ModelSerializer):
 
 class TestimonialSerializer(serializers.ModelSerializer):
     """Serializer for Testimonial."""
-    image = MediaSerializer(read_only=True)
+    photo = MediaSerializer(read_only=True)
     
     class Meta:
         model = Testimonial
         fields = [
             'id', 'company', 'name', 'title', 'company_name', 'content',
-            'image', 'rating', 'is_featured', 'sort_order',
+            'photo', 'rating', 'sort_order', 'is_featured',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
-

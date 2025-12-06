@@ -75,9 +75,3 @@ crm_site.register(FCMDevice, FCMDeviceAdmin)
 crm_site.register(FCMMessage, FCMMessageAdmin)
 crm_site.register(UserNotificationSettings, UserNotificationSettingsAdmin)
 
-
-# Register all models to crm_site as well (for custom admin interface)
-crm_site.register(FCMDevice, FCMDeviceAdmin)
-crm_site.register(FCMMessage, FCMMessageAdmin)
-crm_site.register(UserNotificationSettings, UserNotificationSettingsAdmin)
-

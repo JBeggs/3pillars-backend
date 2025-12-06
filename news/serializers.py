@@ -10,6 +10,7 @@ from .models import (
     Notification, SiteSetting, TeamMember, Testimonial,
     AudioRecording, ContentImport, UserSession
 )
+from .utils import get_company_from_request
 
 User = get_user_model()
 
@@ -47,6 +48,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class TagSerializer(serializers.ModelSerializer):
     """Serializer for Tag."""
     usage_count = serializers.SerializerMethodField()
+    company = serializers.PrimaryKeyRelatedField(required=False, read_only=True)
     
     class Meta:
         model = Tag
@@ -54,10 +56,29 @@ class TagSerializer(serializers.ModelSerializer):
             'id', 'company', 'name', 'slug', 'description', 'color',
             'usage_count', 'created_at'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'company', 'created_at']
     
     def get_usage_count(self, obj):
         return obj.articles.count()
+    
+    def create(self, validated_data):
+        """Auto-populate company from request context."""
+        request = self.context.get('request')
+        company = get_company_from_request(request)
+        
+        if not company:
+            raise serializers.ValidationError({
+                'company': 'Company is required. Please provide X-Company-Id header.'
+            })
+        
+        validated_data['company'] = company
+        
+        # Auto-generate slug if not provided
+        if not validated_data.get('slug') and validated_data.get('name'):
+            from django.utils.text import slugify
+            validated_data['slug'] = slugify(validated_data['name'])
+        
+        return super().create(validated_data)
 
 
 class MediaSerializer(serializers.ModelSerializer):

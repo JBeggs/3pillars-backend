@@ -60,18 +60,17 @@ class ArticleAdmin(admin.ModelAdmin):
     search_fields = ['title', 'subtitle', 'excerpt', 'content']
     readonly_fields = ['id', 'views', 'likes', 'shares', 'version', 'created_at', 'updated_at']
     date_hierarchy = 'published_at'
-    raw_id_fields = ['company', 'author', 'featured_media', 'category', 'social_image', 'parent_version']
+    raw_id_fields = ['author', 'category', 'social_image', 'parent_version']
     filter_horizontal = ['co_authors', 'tags']
     fieldsets = (
         (_('Basic Information'), {
             'fields': ('title', 'slug', 'subtitle', 'excerpt', 'content', 'content_type')
         }),
-        (_('Author & Category'), {
-            'fields': ('author', 'co_authors', 'category', 'tags')
+        (_('Company & Author'), {
+            'fields': ('company', 'author', 'co_authors', 'category', 'tags')
         }),
         (_('Media'), {
             'fields': ('featured_media', 'social_image'),
-            'classes': ('collapse',)
         }),
         (_('Status & Settings'), {
             'fields': (
@@ -100,10 +99,30 @@ class ArticleAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         (_('Metadata'), {
-            'fields': ('id', 'company', 'created_at', 'updated_at', 'deleted_at'),
+            'fields': ('id', 'created_at', 'updated_at', 'deleted_at'),
             'classes': ('collapse',)
         }),
     )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Filter featured_media and social_image by company."""
+        if db_field.name in ['featured_media', 'social_image']:
+            # Get company from the article being edited
+            obj = self.get_object(request, None)
+            if obj and obj.company:
+                kwargs['queryset'] = Media.objects.filter(company=obj.company, media_type='image').order_by('-created_at')
+            else:
+                # If creating new article, show all images (will be filtered after company is selected)
+                kwargs['queryset'] = Media.objects.filter(media_type='image').order_by('-created_at')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    
+    def get_form(self, request, obj=None, **kwargs):
+        """Override form to ensure company is set before media fields."""
+        form = super().get_form(request, obj, **kwargs)
+        # Make company required and ensure it's set first
+        if 'company' in form.base_fields:
+            form.base_fields['company'].required = True
+        return form
 
 
 @admin.register(Comment)

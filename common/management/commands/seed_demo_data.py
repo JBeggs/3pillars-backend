@@ -37,9 +37,9 @@ class Command(BaseCommand):
 
         # Create users
         admin_user = self._create_admin_user()
-        jody_user = self._create_user('jody', 'jody123', 'Jody', 'Beggs', 'jody@example.com', is_staff=True)
-        debbie_user = self._create_user('debbie', 'debbie123', 'Debbie', 'Smith', 'debbie@example.com', is_staff=True)
-        barden_user = self._create_user('barden', 'barden123', 'Barden', 'Johnson', 'barden@example.com', is_staff=True)
+        jody_user = self._create_user('jody', 'jody123', 'Jody', 'Beggs', 'jody@3pillars.co.za', is_staff=True)
+        debbie_user = self._create_user('debbie', 'debbie123', 'Debbie', 'Smith', 'debbie@3pillars.co.za', is_staff=True)
+        barden_user = self._create_user('barden', 'barden123', 'Barden', 'Johnson', 'barden@3pillars.co.za', is_staff=True)
 
         # Get departments/groups
         sales_group = Group.objects.filter(name__icontains='sales').first()
@@ -140,7 +140,7 @@ class Command(BaseCommand):
         user, created = User.objects.get_or_create(
             username='admin',
             defaults={
-                'email': 'admin@example.com',
+                'email': 'admin@3pillars.co.za',
                 'first_name': 'Admin',
                 'last_name': 'User',
                 'is_superuser': True,

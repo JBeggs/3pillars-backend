@@ -396,9 +396,19 @@ class BusinessViewSet(CompanyScopedViewSet):
         return BusinessDetailSerializer
     
     def get_queryset(self):
-        """Filter by company, but allow business owners to see their own businesses."""
+        """Filter by company, but allow business owners to see their own businesses.
+        For public/homepage access, show businesses from Riverside Herald company."""
+        from ecommerce.models import EcommerceCompany
         queryset = super().get_queryset()
         company = get_company_from_request(self.request)
+        
+        # Try to find Riverside Herald company for public display
+        try:
+            riverside_company = EcommerceCompany.objects.filter(
+                Q(name__icontains='riverside') | Q(slug__icontains='riverside-herald') | Q(name__icontains='riverside herald')
+            ).first()
+        except Exception:
+            riverside_company = None
         
         if not company:
             if self.request.user.is_superuser:
@@ -406,6 +416,10 @@ class BusinessViewSet(CompanyScopedViewSet):
             # If no company context but user is authenticated, show their own businesses
             if self.request.user.is_authenticated:
                 return queryset.filter(owner=self.request.user)
+            # For anonymous users (homepage), show businesses from Riverside Herald
+            if riverside_company:
+                return queryset.filter(company=riverside_company)
+            # If no Riverside Herald found, return empty (better than showing all businesses)
             return queryset.none()
         
         # Filter by company OR businesses owned by this user
@@ -415,7 +429,14 @@ class BusinessViewSet(CompanyScopedViewSet):
                 Q(company=company) | Q(owner=self.request.user)
             )
         else:
-            queryset = queryset.filter(company=company)
+            # For anonymous users, show businesses from the company in header
+            # But also include Riverside Herald businesses for homepage
+            if riverside_company and company != riverside_company:
+                queryset = queryset.filter(
+                    Q(company=company) | Q(company=riverside_company)
+                )
+            else:
+                queryset = queryset.filter(company=company)
         
         return queryset
     

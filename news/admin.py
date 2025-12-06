@@ -225,7 +225,7 @@ class TestimonialAdmin(admin.ModelAdmin):
 
 @admin.register(GalleryMedia)
 class GalleryMediaAdmin(admin.ModelAdmin):
-    list_display = ['gallery', 'media', 'order', 'created_at']
+    list_display = ['gallery', 'media', 'sort_order', 'created_at']
     list_filter = ['gallery__company', 'created_at']
     search_fields = ['gallery__title', 'media__filename']
     raw_id_fields = ['gallery', 'media']
@@ -252,11 +252,11 @@ class BusinessMediaAdmin(admin.ModelAdmin):
 
 @admin.register(RSSArticleTracking)
 class RSSArticleTrackingAdmin(admin.ModelAdmin):
-    list_display = ['rss_source', 'article', 'imported_at', 'status']
-    list_filter = ['rss_source__company', 'status', 'imported_at']
-    search_fields = ['rss_source__name', 'article__title', 'external_id']
+    list_display = ['rss_source', 'external_id', 'article', 'created_at']
+    list_filter = ['rss_source', 'created_at']
+    search_fields = ['external_id', 'article__title', 'rss_source__name']
     raw_id_fields = ['rss_source', 'article']
-    readonly_fields = ['imported_at']
+    readonly_fields = ['created_at']
 
 
 @admin.register(AudioRecording)

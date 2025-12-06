@@ -560,22 +560,27 @@ class SiteSettingViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Filter by company and public visibility."""
-        queryset = super().get_queryset()
-        company = get_company_from_request(self.request)
-        
-        if not company:
-            # If no company ID provided, return empty (unless superuser)
-            if self.request.user.is_superuser:
-                return queryset
-            return queryset.none()
-        
-        queryset = queryset.filter(company=company)
-        
-        # Non-authenticated users only see public settings
-        if not self.request.user.is_authenticated:
-            queryset = queryset.filter(is_public=True)
-        
-        return queryset
+        try:
+            queryset = super().get_queryset()
+            company = get_company_from_request(self.request)
+            
+            if not company:
+                # If no company ID provided, return empty (unless superuser)
+                if self.request.user.is_superuser:
+                    return queryset
+                return queryset.none()
+            
+            queryset = queryset.filter(company=company)
+            
+            # Non-authenticated users only see public settings
+            if not self.request.user.is_authenticated:
+                queryset = queryset.filter(is_public=True)
+            
+            return queryset
+        except Exception as e:
+            logger.error(f"Error in SiteSettingViewSet.get_queryset: {e}", exc_info=True)
+            # Return empty queryset on error to prevent 500
+            return SiteSetting.objects.none()
     
     def perform_create(self, serializer):
         """Require company access for creating settings."""

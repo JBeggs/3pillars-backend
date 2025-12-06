@@ -434,7 +434,21 @@ class BusinessListSerializer(serializers.ModelSerializer):
 class BusinessDetailSerializer(serializers.ModelSerializer):
     """Serializer for Business detail view."""
     logo = MediaSerializer(read_only=True)
+    logo_id = serializers.PrimaryKeyRelatedField(
+        source='logo',
+        queryset=Media.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
     cover_image = MediaSerializer(read_only=True)
+    cover_image_id = serializers.PrimaryKeyRelatedField(
+        source='cover_image',
+        queryset=Media.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
     owner_name = serializers.CharField(source='owner.get_full_name', read_only=True)
     reviews = serializers.SerializerMethodField()
     
@@ -443,7 +457,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'company', 'name', 'slug', 'description', 'long_description',
             'industry', 'website_url', 'phone', 'email', 'address', 'city',
-            'state', 'zip_code', 'logo', 'cover_image', 'owner', 'owner_name',
+            'state', 'zip_code', 'logo', 'logo_id', 'cover_image', 'cover_image_id', 'owner', 'owner_name',
             'business_hours', 'social_links', 'services', 'is_verified',
             'rating', 'review_count', 'seo_title', 'seo_description',
             'reviews', 'created_at', 'updated_at'

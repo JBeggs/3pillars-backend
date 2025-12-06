@@ -172,22 +172,32 @@ class ArticleViewSet(CompanyScopedViewSet):
     
     def get_queryset(self):
         """Filter by company and handle published status."""
+        from ecommerce.models import EcommerceCompany
+        from django.db.models import Q
         queryset = super().get_queryset()
         company = get_company_from_request(self.request)
         
-        if not company:
-            # No company context
-            if self.request.user.is_superuser:
-                return queryset
-            # If authenticated but no company, show their own articles
-            if self.request.user.is_authenticated:
-                queryset = queryset.filter(author=self.request.user)
-            else:
-                # Anonymous users without company see nothing
-                return queryset.none()
-        else:
-            # Filter by company - ALL users see ALL articles from the company
-            queryset = queryset.filter(company=company)
+        # Always include Riverside Herald articles (the news platform company)
+        # Articles belong to Riverside Herald, not individual business companies
+        try:
+            riverside_company = EcommerceCompany.objects.filter(
+                Q(name__icontains='riverside') | Q(slug__icontains='riverside-herald') | Q(name__icontains='riverside herald')
+            ).first()
+            
+            if riverside_company:
+                # Filter by Riverside Herald company - this is where articles belong
+                queryset = queryset.filter(company=riverside_company)
+            elif company:
+                # Fallback: if Riverside Herald not found, use the company from header
+                queryset = queryset.filter(company=company)
+            # If no company found, don't filter - show all articles
+            # This ensures articles are always visible
+        except Exception as e:
+            logger.error(f"Error filtering articles by company: {e}", exc_info=True)
+            # Fallback: if error, try to use company from header
+            if company:
+                queryset = queryset.filter(company=company)
+            # If no company, don't filter - show all articles
         
         # Filter by status based on user permissions
         if not self.request.user.is_authenticated:

@@ -39,22 +39,29 @@ def get_company_from_request(request):
     2. From query parameter (for superusers)
     3. From user's owned company
     4. From JWT token (if implemented)
+    
+    For public read access, allows company lookup from X-Company-Id header without authentication.
     """
     user = request.user
     
-    if not user.is_authenticated:
-        return None
-    
     # Priority 1: From X-Company-Id header (for multi-tenant web connections)
+    # Allow this for unauthenticated users for public read access
     company_id_header = request.headers.get('X-Company-Id') or request.META.get('HTTP_X_COMPANY_ID')
     if company_id_header:
         try:
             company = EcommerceCompany.objects.get(id=company_id_header)
-            # Verify user has access to this company (owner or member)
+            # For unauthenticated users, allow access if company ID is provided (public read)
+            if not user.is_authenticated:
+                return company
+            # For authenticated users, verify access
             if user.is_superuser or company.owner == user or company.users.filter(id=user.id).exists():
                 return company
         except (EcommerceCompany.DoesNotExist, ValueError):
             pass
+    
+    # If not authenticated and no company from header, return None
+    if not user.is_authenticated:
+        return None
     
     # Priority 2: Superusers can specify company via query param
     if user.is_superuser:

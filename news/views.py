@@ -421,7 +421,7 @@ class BusinessViewSet(CompanyScopedViewSet):
     """ViewSet for Business."""
     queryset = Business.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly, HasCompanyAccess, IsBusinessOwnerOrReadOnly]
-    filterset_fields = ['industry', 'is_verified']
+    filterset_fields = ['industry', 'is_verified', 'owner']
     search_fields = ['name', 'description', 'industry', 'city', 'state']
     ordering_fields = ['name', 'rating', 'review_count', 'created_at']
     ordering = ['-is_verified', '-rating', 'name']

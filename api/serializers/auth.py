@@ -299,21 +299,36 @@ class BusinessRegistrationSerializer(serializers.Serializer):
             )
             
             # Create Business listing for the business owner
+            # Business listings belong to Riverside Herald company (the news platform), not the business owner's tenant company
             from news.models import Business
             from django.utils.text import slugify as django_slugify
+            
+            # Find Riverside Herald company (where businesses should be listed)
+            riverside_company = None
+            for name_variant in ['Riverside Herald', 'riverside-herald', 'riversideherald']:
+                riverside_company = EcommerceCompany.objects.filter(
+                    name__iexact=name_variant
+                ).first() or EcommerceCompany.objects.filter(
+                    slug__iexact=name_variant.lower().replace(' ', '-')
+                ).first()
+                if riverside_company:
+                    break
+            
+            # If Riverside Herald not found, use the business owner's company as fallback
+            business_company = riverside_company if riverside_company else company
             
             # Generate business slug from company name
             business_slug = django_slugify(company_name)
             business_slug_base = business_slug
             business_slug_counter = 1
             # Ensure unique slug within company
-            while Business.objects.filter(company=company, slug=business_slug).exists():
+            while Business.objects.filter(company=business_company, slug=business_slug).exists():
                 business_slug = f"{business_slug_base}-{business_slug_counter}"
                 business_slug_counter += 1
             
             # Create Business instance
             Business.objects.create(
-                company=company,
+                company=business_company,  # Riverside Herald company (news platform)
                 name=company_name,
                 slug=business_slug,
                 description=validated_data.get('company_description', ''),
@@ -324,7 +339,7 @@ class BusinessRegistrationSerializer(serializers.Serializer):
                 city=validated_data.get('company_address_city', ''),
                 state=validated_data.get('company_address_province', ''),
                 zip_code=validated_data.get('company_address_postal_code', ''),
-                owner=user,
+                owner=user,  # Business owner
                 is_verified=False,
             )
             

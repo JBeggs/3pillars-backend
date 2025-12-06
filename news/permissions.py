@@ -19,11 +19,21 @@ class HasCompanyAccess(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True  # Allow read access - queryset handles filtering
         
-        # For write operations, require company and authentication
-        if not company:
+        if not request.user.is_authenticated:
             return False
         
-        if not request.user.is_authenticated:
+        # Check user profile role FIRST - business owners can pass even without company header
+        # This allows them to edit their own businesses and create articles
+        if hasattr(request.user, 'news_profile'):
+            profile = request.user.news_profile
+            if profile.role == 'business_owner':
+                # Allow business owners to pass HasCompanyAccess for write operations
+                # Object-level permissions (IsBusinessOwnerOrReadOnly, IsAuthorOrReadOnly) 
+                # will verify they own the business/article
+                return True
+        
+        # For write operations, require company (unless already passed above)
+        if not company:
             return False
         
         # Check user owns or is member of company
@@ -34,29 +44,11 @@ class HasCompanyAccess(permissions.BasePermission):
         if hasattr(company, 'users') and request.user in company.users.all():
             return True
         
-        # Allow authors, editors, admins, and business owners to create content (for news platform)
-        # Check user profile role - authors and business owners should be able to create articles
+        # Allow authors, editors, admins to create content (for news platform)
         if hasattr(request.user, 'news_profile'):
             profile = request.user.news_profile
-            if profile.role in ['admin', 'editor', 'author', 'business_owner']:
+            if profile.role in ['admin', 'editor', 'author']:
                 return True
-        
-        # Business owners can edit their own businesses even if they don't own the company in header
-        # The object-level permission (IsBusinessOwnerOrReadOnly) will check actual ownership
-        # This allows business owners to pass HasCompanyAccess for Business operations
-        if hasattr(request.user, 'news_profile'):
-            profile = request.user.news_profile
-            if profile.role == 'business_owner':
-                # For Business operations, allow business owners to pass
-                # Object-level permission will verify they own the business
-                # Check if view has Business model in queryset
-                try:
-                    if hasattr(view, 'queryset') and view.queryset:
-                        model_name = view.queryset.model.__name__
-                        if model_name == 'Business':
-                            return True
-                except:
-                    pass
         
         # Superusers can access any company
         if request.user.is_superuser:

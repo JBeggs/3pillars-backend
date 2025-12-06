@@ -235,20 +235,20 @@ class ArticleViewSet(CompanyScopedViewSet):
         
         company = get_company_from_request(self.request)
         
-        # If no company from header, try to find Riverside Herald (for authors)
-        if not company:
-            try:
-                riverside_company = EcommerceCompany.objects.filter(
-                    Q(name__icontains='riverside') | Q(slug__icontains='riverside-herald') | Q(name__icontains='riverside herald')
-                ).first()
-                if riverside_company:
-                    company = riverside_company
-            except Exception as e:
-                logger.error(f"Error finding Riverside Herald company: {e}", exc_info=True)
+        # Articles always belong to Riverside Herald (the news platform company)
+        # Even if business owner's company is in header, use Riverside Herald
+        try:
+            riverside_company = EcommerceCompany.objects.filter(
+                Q(name__icontains='riverside') | Q(slug__icontains='riverside-herald') | Q(name__icontains='riverside herald')
+            ).first()
+            if riverside_company:
+                company = riverside_company
+        except Exception as e:
+            logger.error(f"Error finding Riverside Herald company: {e}", exc_info=True)
         
         # If still no company, raise error
         if not company:
-            raise PermissionDenied('Company context required. Provide X-Company-Id header or ensure Riverside Herald company exists.')
+            raise PermissionDenied('Riverside Herald company not found. Articles must belong to the news platform company.')
         
         serializer.save(
             company=company,

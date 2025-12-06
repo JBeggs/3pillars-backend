@@ -90,8 +90,30 @@ class Command(BaseCommand):
             user.is_staff = True
         user.save()
 
-        # Check if company already exists
+        # Check if company already exists for this user
         company = EcommerceCompany.objects.filter(owner=user).first()
+        
+        # Also check if "Riverside Herald" company exists (for shared company scenario)
+        if not company:
+            # Try to find existing Riverside Herald company
+            for name_variant in ['Riverside Herald', 'riverside-herald', 'riversideherald']:
+                existing_company = EcommerceCompany.objects.filter(
+                    name__iexact=name_variant
+                ).first() or EcommerceCompany.objects.filter(
+                    slug__iexact=name_variant.lower().replace(' ', '-')
+                ).first()
+                if existing_company:
+                    company = existing_company
+                    # Add user as member if ManyToMany is set up
+                    if hasattr(company, 'users'):
+                        company.users.add(user)
+                    self.stdout.write(self.style.WARNING(
+                        f'Found existing company: {company.name} (ID: {company.id}). '
+                        f'User added as member (owner: {company.owner.email})'
+                    ))
+                    break
+        
+        # If still no company, create a new one
         if not company:
             # Create company
             company_slug = company_name.lower().replace(' ', '-').replace('_', '-')
@@ -111,7 +133,7 @@ class Command(BaseCommand):
                 plan='premium',  # Give premium plan for full features
             )
             self.stdout.write(self.style.SUCCESS(f'✓ Created company: {company_name} (ID: {company.id})'))
-        else:
+        elif company.owner == user:
             self.stdout.write(self.style.WARNING(f'Company already exists: {company.name} (ID: {company.id})'))
 
         # Create or update news profile

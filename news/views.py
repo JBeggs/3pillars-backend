@@ -204,15 +204,52 @@ class ArticleViewSet(CompanyScopedViewSet):
             # Anonymous: only published articles
             queryset = queryset.filter(status='published')
         else:
-            # ALL authenticated users (including business owners) see ALL articles regardless of status
-            # This allows business owners to see and edit all company articles
-            pass  # No status filtering for authenticated users - they see everything
+            # Authenticated users: published articles + their own drafts (or all drafts if admin/editor)
+            # Check user profile role
+            is_admin_or_editor = False
+            is_author = False
+            if hasattr(self.request.user, 'news_profile'):
+                profile = self.request.user.news_profile
+                is_admin_or_editor = profile.role in ['admin', 'editor']
+                is_author = profile.role == 'author'
+            
+            if is_admin_or_editor:
+                # Admins and editors can see all articles (published and drafts)
+                pass  # No status filtering - they see everything
+            elif is_author:
+                # Authors can see published articles + their own drafts only
+                queryset = queryset.filter(
+                    Q(status='published') | 
+                    Q(status='draft', author=self.request.user)
+                )
+            else:
+                # Other authenticated users (business owners, regular users) see only published articles
+                queryset = queryset.filter(status='published')
         
         return queryset
     
     def perform_create(self, serializer):
         """Set company and author."""
+        from ecommerce.models import EcommerceCompany
+        from django.db.models import Q
+        
         company = get_company_from_request(self.request)
+        
+        # If no company from header, try to find Riverside Herald (for authors)
+        if not company:
+            try:
+                riverside_company = EcommerceCompany.objects.filter(
+                    Q(name__icontains='riverside') | Q(slug__icontains='riverside-herald') | Q(name__icontains='riverside herald')
+                ).first()
+                if riverside_company:
+                    company = riverside_company
+            except Exception as e:
+                logger.error(f"Error finding Riverside Herald company: {e}", exc_info=True)
+        
+        # If still no company, raise error
+        if not company:
+            raise PermissionDenied('Company context required. Provide X-Company-Id header or ensure Riverside Herald company exists.')
+        
         serializer.save(
             company=company,
             author=self.request.user

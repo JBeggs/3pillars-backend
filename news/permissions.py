@@ -9,7 +9,7 @@ class HasCompanyAccess(permissions.BasePermission):
     """
     Permission to check if user has access to the company in the request.
     For read operations (GET, HEAD, OPTIONS), allows access if company ID is provided.
-    For write operations, requires authentication and company membership.
+    For write operations, requires authentication and company membership or appropriate role.
     """
     def has_permission(self, request, view):
         company = get_company_from_request(request)
@@ -34,6 +34,13 @@ class HasCompanyAccess(permissions.BasePermission):
         if hasattr(company, 'users') and request.user in company.users.all():
             return True
         
+        # Allow authors, editors, and admins to create content (for news platform)
+        # Check user profile role - authors should be able to create articles
+        if hasattr(request.user, 'news_profile'):
+            profile = request.user.news_profile
+            if profile.role in ['admin', 'editor', 'author']:
+                return True
+        
         # Superusers can access any company
         if request.user.is_superuser:
             return True
@@ -44,9 +51,31 @@ class HasCompanyAccess(permissions.BasePermission):
 class IsAuthorOrReadOnly(permissions.BasePermission):
     """
     Object-level permission: only authors can edit their articles.
+    Drafts can only be viewed by their author (or admin/editor).
     """
     def has_object_permission(self, request, view, obj):
-        # Read permissions for any authenticated user
+        # Check if this is a draft article
+        is_draft = hasattr(obj, 'status') and obj.status == 'draft'
+        
+        # For draft articles, restrict read access
+        if request.method in permissions.SAFE_METHODS and is_draft:
+            # Drafts can only be viewed by their author, admin, or editor
+            if hasattr(obj, 'author') and obj.author == request.user:
+                return True
+            
+            # Admins and editors can view all drafts
+            if hasattr(request.user, 'news_profile'):
+                profile = request.user.news_profile
+                if profile.role in ['admin', 'editor']:
+                    return True
+            
+            # Company owner can view drafts
+            if hasattr(obj, 'company') and obj.company.owner == request.user:
+                return True
+            
+            return False
+        
+        # For published articles, read permissions for any authenticated user
         if request.method in permissions.SAFE_METHODS:
             return True
         

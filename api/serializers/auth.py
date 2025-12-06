@@ -298,6 +298,36 @@ class BusinessRegistrationSerializer(serializers.Serializer):
                 }
             )
             
+            # Create Business listing for the business owner
+            from news.models import Business
+            from django.utils.text import slugify as django_slugify
+            
+            # Generate business slug from company name
+            business_slug = django_slugify(company_name)
+            business_slug_base = business_slug
+            business_slug_counter = 1
+            # Ensure unique slug within company
+            while Business.objects.filter(company=company, slug=business_slug).exists():
+                business_slug = f"{business_slug_base}-{business_slug_counter}"
+                business_slug_counter += 1
+            
+            # Create Business instance
+            Business.objects.create(
+                company=company,
+                name=company_name,
+                slug=business_slug,
+                description=validated_data.get('company_description', ''),
+                email=validated_data.get('company_email', validated_data['email']),
+                phone=validated_data.get('company_phone', ''),
+                website_url=validated_data.get('company_website', ''),
+                address=validated_data.get('company_address_street', ''),
+                city=validated_data.get('company_address_city', ''),
+                state=validated_data.get('company_address_province', ''),
+                zip_code=validated_data.get('company_address_postal_code', ''),
+                owner=user,
+                is_verified=False,
+            )
+            
             # Create deal for this registration (with error handling)
             import logging
             logger = logging.getLogger(__name__)

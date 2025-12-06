@@ -174,7 +174,9 @@ class ArticleViewSet(CompanyScopedViewSet):
         """Filter by company and handle published status."""
         from ecommerce.models import EcommerceCompany
         from django.db.models import Q
-        queryset = super().get_queryset()
+        # Don't call super().get_queryset() - it returns empty if no company header
+        # Instead, get the base queryset directly
+        queryset = Article.objects.all()
         company = get_company_from_request(self.request)
         
         # Always include Riverside Herald articles (the news platform company)
@@ -436,7 +438,9 @@ class BusinessViewSet(CompanyScopedViewSet):
         """Filter by company, but allow business owners to see their own businesses.
         For public/homepage access, show businesses from Riverside Herald company."""
         from ecommerce.models import EcommerceCompany
-        queryset = super().get_queryset()
+        # Don't call super().get_queryset() - it returns empty if no company header
+        # Instead, get the base queryset directly
+        queryset = Business.objects.all()
         company = get_company_from_request(self.request)
         
         # Try to find Riverside Herald company for public display
@@ -462,6 +466,8 @@ class BusinessViewSet(CompanyScopedViewSet):
         # Filter by company OR businesses owned by this user
         # This allows business owners to see and edit their own businesses even if viewing from different company
         if self.request.user.is_authenticated:
+            # Always include businesses owned by the user, regardless of company header
+            # Also include businesses from the company in header (if provided)
             queryset = queryset.filter(
                 Q(company=company) | Q(owner=self.request.user)
             )
@@ -478,10 +484,22 @@ class BusinessViewSet(CompanyScopedViewSet):
         return queryset
     
     def perform_create(self, serializer):
-        """Set company and owner."""
-        company = get_company_from_request(self.request)
-        if not company:
-            raise PermissionDenied('Company context required. Provide X-Company-Id header.')
+        """Set company and owner. Businesses belong to Riverside Herald company."""
+        from ecommerce.models import EcommerceCompany
+        from django.db.models import Q
+        
+        # Businesses always belong to Riverside Herald (the news platform company)
+        # Find Riverside Herald company
+        riverside_company = None
+        try:
+            riverside_company = EcommerceCompany.objects.filter(
+                Q(name__icontains='riverside') | Q(slug__icontains='riverside-herald') | Q(name__icontains='riverside herald')
+            ).first()
+        except Exception as e:
+            logger.error(f"Error finding Riverside Herald company: {e}", exc_info=True)
+        
+        if not riverside_company:
+            raise PermissionDenied('Riverside Herald company not found. Businesses must belong to the news platform company.')
         
         # Auto-generate slug if not provided
         if not serializer.validated_data.get('slug') and serializer.validated_data.get('name'):
@@ -490,13 +508,13 @@ class BusinessViewSet(CompanyScopedViewSet):
             slug = base_slug
             counter = 1
             # Ensure unique slug within company
-            while Business.objects.filter(company=company, slug=slug).exists():
+            while Business.objects.filter(company=riverside_company, slug=slug).exists():
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             serializer.validated_data['slug'] = slug
         
         serializer.save(
-            company=company,
+            company=riverside_company,  # Always use Riverside Herald
             owner=self.request.user
         )
 

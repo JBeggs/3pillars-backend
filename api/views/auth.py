@@ -21,6 +21,7 @@ from api.serializers.auth import (
     RefreshTokenSerializer,
     RefreshTokenResponseSerializer,
     BusinessRegistrationSerializer,
+    UserRegistrationSerializer,
 )
 
 User = get_user_model()
@@ -94,7 +95,22 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                     
                     # Get user's company if available
                     from ecommerce.models import EcommerceCompany
+                    # First try: user's owned company (for business owners)
                     company = EcommerceCompany.objects.filter(owner=user).first()
+                    # Second try: user is a member of a company (for regular users)
+                    if not company:
+                        company = EcommerceCompany.objects.filter(users=user).first()
+                    # Third try: Riverside Herald (for regular users who don't have a company yet)
+                    if not company:
+                        company = EcommerceCompany.objects.filter(
+                            name__iexact='Riverside Herald'
+                        ).first() or EcommerceCompany.objects.filter(
+                            slug__iexact='riverside-herald'
+                        ).first()
+                        # If found, add user as member
+                        if company and hasattr(company, 'users'):
+                            company.users.add(user)
+                    
                     if company:
                         response.data['company'] = {
                             'id': str(company.id),
@@ -102,6 +118,17 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                             'slug': company.slug,
                             'email': company.email,
                         }
+                    
+                    # Get news profile if it exists
+                    try:
+                        from news.models import Profile
+                        profile = Profile.objects.get(user=user)
+                        response.data['profile'] = {
+                            'role': profile.role,
+                            'is_verified': profile.is_verified,
+                        }
+                    except:
+                        pass  # Profile might not exist yet
                 except (OperationalError, ProgrammingError) as e:
                     return Response(
                         {'error': 'Database connection error. Please try again later.'},
@@ -174,8 +201,20 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
-    """Business registration endpoint - creates user and company."""
-    serializer = BusinessRegistrationSerializer(data=request.data)
+    """
+    Registration endpoint - handles both user and business registration.
+    - If 'company_name' is provided: Business registration (creates new company)
+    - Otherwise: User registration (connects to Riverside Herald)
+    """
+    # Detect registration type based on presence of company_name
+    is_business_registration = 'company_name' in request.data and request.data.get('company_name')
+    
+    if is_business_registration:
+        # Business registration - creates new company
+        serializer = BusinessRegistrationSerializer(data=request.data)
+    else:
+        # User registration - connects to Riverside Herald
+        serializer = UserRegistrationSerializer(data=request.data)
     
     if not serializer.is_valid():
         return Response(
@@ -193,24 +232,41 @@ def register(request):
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         
+        # Get news profile if it exists
+        from news.models import Profile
+        try:
+            profile = Profile.objects.get(user=user)
+            profile_data = {
+                'role': profile.role,
+                'is_verified': profile.is_verified,
+            }
+        except Profile.DoesNotExist:
+            profile_data = None
+        
         # Return user data, company data, and tokens
-        # Note: Company status is 'trial' until deal is completed, then activated to 'active'
-        return Response({
-            'message': 'Registration successful. Your account is pending approval. You will be notified once approved.',
+        response_data = {
+            'message': 'Registration successful!' if not is_business_registration else 'Registration successful. Your account is pending approval. You will be notified once approved.',
             'user': UserSerializer(user).data,
             'company': {
                 'id': str(company.id),
                 'name': company.name,
                 'slug': company.slug,
                 'email': company.email,
-                'status': company.status,  # Will be 'trial'
+                'status': company.status,
             },
             'tokens': {
                 'access': access_token,
                 'refresh': refresh_token,
             },
-            'pending_approval': True,
-        }, status=status.HTTP_201_CREATED)
+        }
+        
+        if profile_data:
+            response_data['profile'] = profile_data
+        
+        if is_business_registration:
+            response_data['pending_approval'] = True
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
         
     except Exception as e:
         logger.error(f"Registration error: {e}", exc_info=True)

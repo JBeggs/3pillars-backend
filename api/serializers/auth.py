@@ -37,6 +37,134 @@ class RefreshTokenResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
 
 
+class UserRegistrationSerializer(serializers.Serializer):
+    """
+    Serializer for regular user registration (connects to Riverside Herald).
+    Creates a user account and connects them to Riverside Herald company.
+    """
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password_confirm = serializers.CharField(write_only=True, required=True)
+    full_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    role = serializers.ChoiceField(
+        choices=['user', 'subscriber', 'premium_subscriber', 'author'],
+        default='user',
+        required=False
+    )
+    
+    def validate(self, attrs):
+        """Validate registration data."""
+        # Check if email already exists
+        if User.objects.filter(email=attrs['email']).exists():
+            raise serializers.ValidationError({'email': 'Email already registered'})
+        
+        # Validate password match
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({'password_confirm': 'Passwords do not match'})
+        
+        return attrs
+    
+    def create(self, validated_data):
+        """Create user and connect to Riverside Herald company, create news profile."""
+        from ecommerce.models import EcommerceCompany
+        from news.models import Profile
+        from django.db import transaction
+        
+        password = validated_data.pop('password')
+        validated_data.pop('password_confirm')
+        full_name = validated_data.pop('full_name', '')
+        role = validated_data.pop('role', 'user')
+        
+        with transaction.atomic():
+            # Generate username from email
+            email = validated_data['email']
+            username = email.split('@')[0]
+            # Ensure username is unique
+            base_username = username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            # Split full name into first and last
+            name_parts = full_name.split() if full_name else []
+            first_name = name_parts[0] if name_parts else ''
+            last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
+            
+            # Create user
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                is_active=True,
+            )
+            
+            # Find or create Riverside Herald company
+            # Try multiple variations of the name
+            company = None
+            for name_variant in ['Riverside Herald', 'riverside-herald', 'riversideherald']:
+                company = EcommerceCompany.objects.filter(
+                    name__iexact=name_variant
+                ).first() or EcommerceCompany.objects.filter(
+                    slug__iexact=name_variant.lower().replace(' ', '-')
+                ).first()
+                if company:
+                    break
+            
+            # If not found, create it (shouldn't happen if management command was run)
+            if not company:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning("Riverside Herald company not found, creating it...")
+                
+                # Get or create a superuser to own it (or use first staff user)
+                owner = User.objects.filter(is_staff=True, is_active=True).first()
+                if not owner:
+                    owner = User.objects.filter(is_superuser=True).first()
+                if not owner:
+                    # Create a system user (shouldn't happen in production)
+                    owner = User.objects.first()
+                
+                company = EcommerceCompany.objects.create(
+                    name='Riverside Herald',
+                    slug='riverside-herald',
+                    email='admin@riversideherald.co.za',
+                    owner=owner,
+                    status='active',
+                    plan='premium',
+                )
+            
+            # Add user as a member of the company (if ManyToMany is set up)
+            if hasattr(company, 'users'):
+                company.users.add(user)
+            
+            # Create news profile
+            profile, created = Profile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'username': username,
+                    'full_name': full_name,
+                    'role': role,
+                    'is_verified': False,  # Can be verified by admin later
+                }
+            )
+            
+            if not created:
+                # Update existing profile
+                profile.username = username
+                profile.full_name = full_name
+                profile.role = role
+                profile.save()
+            
+            return {
+                'user': user,
+                'company': company,
+                'profile': profile,
+            }
+
+
 class BusinessRegistrationSerializer(serializers.Serializer):
     """
     Serializer for business registration.
@@ -107,6 +235,7 @@ class BusinessRegistrationSerializer(serializers.Serializer):
     def create(self, validated_data):
         """Create user and company, then create deal and send notifications."""
         from ecommerce.models import EcommerceCompany
+        from news.models import Profile
         from django.db import transaction
         from django.utils import timezone
         from datetime import timedelta
@@ -151,6 +280,19 @@ class BusinessRegistrationSerializer(serializers.Serializer):
                 product=product,
                 status='trial',  # Start as trial, will be activated to 'active' when deal is completed
                 plan='free'
+            )
+            
+            # Create news profile for business owner (with business_owner role if needed)
+            # For now, give them 'author' role so they can manage their business content
+            full_name = f"{validated_data.get('first_name', '')} {validated_data.get('last_name', '')}".strip()
+            Profile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'username': user.username,
+                    'full_name': full_name or user.username,
+                    'role': 'author',  # Business owners can create content
+                    'is_verified': False,
+                }
             )
             
             # Create deal for this registration (with error handling)

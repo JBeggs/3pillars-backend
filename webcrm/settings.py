@@ -471,6 +471,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://192.168.1.100:3000",  # Local network access
+    "http://192.168.1.103:3000",  # Local network access (additional IP)
+    # News platform frontend - Local development
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
     # Flutter web dev
     "http://localhost:3001",
     "http://127.0.0.1:3001",

@@ -10,8 +10,9 @@ User = get_user_model()
 def get_user_company(user):
     """
     Get the company associated with a user.
-    For now, returns the first company owned by the user.
-    Can be extended to support multiple companies per user.
+    Priority:
+    1. First company owned by the user (business owners)
+    2. First company where user is a member (regular users)
     """
     if not user or not user.is_authenticated:
         return None
@@ -20,8 +21,13 @@ def get_user_company(user):
         # Superusers can access any company via query params
         return None
     
-    # Get first company owned by user
+    # Priority 1: Get first company owned by user (business owners)
     company = EcommerceCompany.objects.filter(owner=user).first()
+    if company:
+        return company
+    
+    # Priority 2: Get first company where user is a member (regular users)
+    company = EcommerceCompany.objects.filter(users=user).first()
     return company
 
 
@@ -45,9 +51,8 @@ def get_company_from_request(request):
         try:
             company = EcommerceCompany.objects.get(id=company_id_header)
             # Verify user has access to this company (owner or member)
-            if user.is_superuser or company.owner == user:
+            if user.is_superuser or company.owner == user or company.users.filter(id=user.id).exists():
                 return company
-            # TODO: Check company membership when membership model is added
         except (EcommerceCompany.DoesNotExist, ValueError):
             pass
     

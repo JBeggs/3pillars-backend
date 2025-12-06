@@ -237,12 +237,33 @@ class ArticleViewSet(CompanyScopedViewSet):
         article = self.get_object()
         company = get_company_from_request(request)
         
+        # Check permissions - user must be author, editor, admin, or company owner
+        if not request.user.is_authenticated:
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Check if user has permission to modify this article
+        has_permission = False
+        if article.author == request.user:
+            has_permission = True
+        elif hasattr(request.user, 'news_profile'):
+            profile = request.user.news_profile
+            if profile.role in ['admin', 'editor']:
+                has_permission = True
+        if company and company.owner == request.user:
+            has_permission = True
+        if request.user.is_superuser:
+            has_permission = True
+        
         if request.method == 'GET':
-            # Get all media for this article
+            # GET is allowed for authenticated users (read-only)
             media_relations = article.article_media_relations.all().order_by('sort_order')
             from .serializers import ArticleMediaSerializer
             serializer = ArticleMediaSerializer(media_relations, many=True, context={'request': request})
             return Response(serializer.data)
+        
+        # POST and DELETE require write permissions
+        if not has_permission:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         
         elif request.method == 'POST':
             # Add media to article
@@ -250,10 +271,33 @@ class ArticleViewSet(CompanyScopedViewSet):
             if not media_id:
                 return Response({'error': 'media_id is required'}, status=status.HTTP_400_BAD_REQUEST)
             
+            # Convert to string if needed (UUID handling)
+            if not isinstance(media_id, str):
+                media_id = str(media_id)
+            
             try:
                 media = Media.objects.get(id=media_id, company=company)
             except Media.DoesNotExist:
-                return Response({'error': 'Media not found'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({
+                    'error': 'Media not found',
+                    'details': f'Media with id {media_id} not found for company {company.id if company else "unknown"}'
+                }, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({
+                    'error': 'Error fetching media',
+                    'details': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Check if media is already in article (prevent duplicates)
+            existing = article.article_media_relations.filter(media_id=media_id).first()
+            if existing:
+                # Update existing entry if caption provided
+                if request.data.get('caption'):
+                    existing.caption = request.data.get('caption')
+                    existing.save()
+                from .serializers import ArticleMediaSerializer
+                serializer = ArticleMediaSerializer(existing, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_200_OK)
             
             # Get max sort_order for this article
             max_order = article.article_media_relations.aggregate(
@@ -277,12 +321,24 @@ class ArticleViewSet(CompanyScopedViewSet):
             if not media_id:
                 return Response({'error': 'media_id is required'}, status=status.HTTP_400_BAD_REQUEST)
             
+            # Convert to string if needed (UUID handling)
+            if not isinstance(media_id, str):
+                media_id = str(media_id)
+            
             try:
                 article_media = article.article_media_relations.get(media_id=media_id)
                 article_media.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             except ArticleMedia.DoesNotExist:
-                return Response({'error': 'Media not found in article'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({
+                    'error': 'Media not found in article',
+                    'details': f'Media with id {media_id} not found in article {article.id}'
+                }, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({
+                    'error': 'Error removing media',
+                    'details': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CommentViewSet(viewsets.ModelViewSet):

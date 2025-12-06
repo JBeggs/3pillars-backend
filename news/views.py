@@ -180,14 +180,9 @@ class ArticleViewSet(CompanyScopedViewSet):
                 return queryset
             return queryset.none()
         
-        # Filter by company OR articles authored by this user
-        # This allows authors/business owners to see and edit their own articles even if viewing from different company
-        if self.request.user.is_authenticated:
-            queryset = queryset.filter(
-                Q(company=company) | Q(author=self.request.user)
-            )
-        else:
-            queryset = queryset.filter(company=company)
+        # Filter by company - authenticated users see ALL articles from the company
+        # Business owners/authors can see all company articles, not just their own
+        queryset = queryset.filter(company=company)
         
         # Filter by status based on user permissions
         if not self.request.user.is_authenticated:

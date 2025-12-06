@@ -214,22 +214,24 @@ class BusinessRegistrationSerializer(serializers.Serializer):
             raise serializers.ValidationError({'password_confirm': 'Passwords do not match'})
         
         # Get or default product (micro-sites)
+        # Make product optional - if no products exist, allow registration without product
         from common.models import Product
         product_id = attrs.get('product_id')
         if product_id:
             try:
                 product = Product.objects.get(id=product_id, is_active=True)
+                attrs['product'] = product
             except Product.DoesNotExist:
                 raise serializers.ValidationError({'product_id': 'Invalid product selected'})
         else:
-            # Default to micro-sites (or first default product)
+            # Try to find default product, but don't fail if none exists
             product = Product.objects.filter(is_default=True, is_active=True).first()
             if not product:
                 product = Product.objects.filter(is_active=True).first()
-            if not product:
-                raise serializers.ValidationError({'product_id': 'No active products available'})
+            if product:
+                attrs['product'] = product
+            # If no product exists, allow registration to proceed without product (product will be None)
         
-        attrs['product'] = product
         return attrs
     
     def create(self, validated_data):
@@ -240,7 +242,7 @@ class BusinessRegistrationSerializer(serializers.Serializer):
         from django.utils import timezone
         from datetime import timedelta
         
-        product = validated_data.pop('product')
+        product = validated_data.pop('product', None)  # Allow None if no product exists
         
         with transaction.atomic():
             # Create user
@@ -263,6 +265,7 @@ class BusinessRegistrationSerializer(serializers.Serializer):
                 counter += 1
             
             # Create company (status: trial until deal is completed, then activated to 'active')
+            # Product is optional - allow None if no products exist in the system
             company = EcommerceCompany.objects.create(
                 name=company_name,
                 slug=slug,
@@ -277,7 +280,7 @@ class BusinessRegistrationSerializer(serializers.Serializer):
                 registration_number=validated_data.get('company_registration_number', ''),
                 tax_number=validated_data.get('company_tax_number', ''),
                 owner=user,
-                product=product,
+                product=product,  # Can be None
                 status='trial',  # Start as trial, will be activated to 'active' when deal is completed
                 plan='free'
             )

@@ -8,13 +8,20 @@ from ecommerce.utils import get_company_from_request
 class HasCompanyAccess(permissions.BasePermission):
     """
     Permission to check if user has access to the company in the request.
+    For read operations (GET, HEAD, OPTIONS), allows access if company ID is provided.
+    For write operations, requires authentication and company membership.
     """
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            return False
-        
         company = get_company_from_request(request)
         if not company:
+            return False
+        
+        # For read operations (GET, HEAD, OPTIONS), allow access if company ID is provided
+        if request.method in permissions.SAFE_METHODS:
+            return True  # Allow public read access when company ID is provided
+        
+        # For write operations, require authentication
+        if not request.user.is_authenticated:
             return False
         
         # Check user owns or is member of company

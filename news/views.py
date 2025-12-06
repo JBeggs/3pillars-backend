@@ -159,7 +159,7 @@ class ArticleViewSet(CompanyScopedViewSet):
     """ViewSet for Article."""
     queryset = Article.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly, HasCompanyAccess, IsAuthorOrReadOnly]
-    filterset_fields = ['status', 'category', 'is_premium', 'is_breaking_news', 'is_trending', 'slug']
+    filterset_fields = ['status', 'category', 'is_premium', 'is_breaking_news', 'is_trending', 'slug', 'author']
     search_fields = ['title', 'subtitle', 'excerpt', 'content']
     ordering_fields = ['published_at', 'created_at', 'views', 'likes']
     ordering = ['-published_at', '-created_at']
@@ -220,10 +220,16 @@ class ArticleViewSet(CompanyScopedViewSet):
                 pass  # No status filtering - they see everything
             elif is_author_or_business_owner:
                 # Authors and business owners can see published articles + their own drafts only
-                queryset = queryset.filter(
-                    Q(status='published') | 
-                    Q(status='draft', author=self.request.user)
-                )
+                # BUT: Business owners should ONLY see their own articles (not all published articles)
+                if profile.role == 'business_owner':
+                    # Business owners: only their own articles (published + drafts)
+                    queryset = queryset.filter(author=self.request.user)
+                else:
+                    # Authors: published articles + their own drafts
+                    queryset = queryset.filter(
+                        Q(status='published') | 
+                        Q(status='draft', author=self.request.user)
+                    )
             else:
                 # Other authenticated users (regular users) see only published articles
                 queryset = queryset.filter(status='published')

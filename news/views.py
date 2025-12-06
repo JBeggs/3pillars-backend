@@ -180,7 +180,14 @@ class ArticleViewSet(CompanyScopedViewSet):
                 return queryset
             return queryset.none()
         
-        queryset = queryset.filter(company=company)
+        # Filter by company OR articles authored by this user
+        # This allows authors/business owners to see and edit their own articles even if viewing from different company
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(
+                Q(company=company) | Q(author=self.request.user)
+            )
+        else:
+            queryset = queryset.filter(company=company)
         
         # Filter by status based on user permissions
         if not self.request.user.is_authenticated:
@@ -391,6 +398,30 @@ class BusinessViewSet(CompanyScopedViewSet):
         if self.action == 'list':
             return BusinessListSerializer
         return BusinessDetailSerializer
+    
+    def get_queryset(self):
+        """Filter by company, but allow business owners to see their own businesses."""
+        queryset = super().get_queryset()
+        company = get_company_from_request(self.request)
+        
+        if not company:
+            if self.request.user.is_superuser:
+                return queryset
+            # If no company context but user is authenticated, show their own businesses
+            if self.request.user.is_authenticated:
+                return queryset.filter(owner=self.request.user)
+            return queryset.none()
+        
+        # Filter by company OR businesses owned by this user
+        # This allows business owners to see and edit their own businesses even if viewing from different company
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(
+                Q(company=company) | Q(owner=self.request.user)
+            )
+        else:
+            queryset = queryset.filter(company=company)
+        
+        return queryset
     
     def perform_create(self, serializer):
         """Set company and owner."""

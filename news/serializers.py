@@ -64,8 +64,10 @@ class MediaSerializer(serializers.ModelSerializer):
     """Serializer for Media."""
     uploaded_by_name = serializers.CharField(source='uploaded_by.get_full_name', read_only=True)
     file = serializers.FileField(write_only=True, required=False)
-    filename = serializers.CharField(required=False, allow_blank=True)
-    mime_type = serializers.CharField(required=False, allow_blank=True)
+    filename = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    original_filename = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    mime_type = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    file_size = serializers.IntegerField(required=False, allow_null=True)
     company = serializers.PrimaryKeyRelatedField(required=False, read_only=True)
     
     class Meta:
@@ -77,9 +79,37 @@ class MediaSerializer(serializers.ModelSerializer):
             'metadata', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'company', 'file_path', 'file_url', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'filename': {'required': False, 'allow_blank': True},
+            'mime_type': {'required': False, 'allow_blank': True},
+            'original_filename': {'required': False, 'allow_blank': True},
+            'file_size': {'required': False, 'allow_null': True},
+        }
+    
+    def to_internal_value(self, data):
+        """Extract file and populate filename/mime_type before validation."""
+        request = self.context.get('request')
+        
+        # Get file from request.FILES if not in data
+        file = None
+        if request and hasattr(request, 'FILES'):
+            file = request.FILES.get('file')
+        
+        # If file exists, populate filename and mime_type if not provided
+        if file:
+            if 'filename' not in data or not data.get('filename'):
+                data['filename'] = file.name
+            if 'original_filename' not in data or not data.get('original_filename'):
+                data['original_filename'] = file.name
+            if 'mime_type' not in data or not data.get('mime_type'):
+                data['mime_type'] = file.content_type or 'application/octet-stream'
+            if 'file_size' not in data or not data.get('file_size'):
+                data['file_size'] = file.size
+        
+        return super().to_internal_value(data)
     
     def validate(self, attrs):
-        """Validate that file is provided if filename/mime_type are not."""
+        """Validate that file is provided and populate missing fields."""
         request = self.context.get('request')
         file = attrs.get('file')
         
@@ -89,7 +119,7 @@ class MediaSerializer(serializers.ModelSerializer):
             if file:
                 attrs['file'] = file
         
-        # If file is provided, generate filename and mime_type if missing
+        # If file is provided, ensure all required fields are set
         if file:
             if not attrs.get('filename'):
                 attrs['filename'] = file.name
@@ -99,6 +129,11 @@ class MediaSerializer(serializers.ModelSerializer):
                 attrs['mime_type'] = file.content_type or 'application/octet-stream'
             if not attrs.get('file_size'):
                 attrs['file_size'] = file.size
+        elif not attrs.get('filename') or not attrs.get('mime_type'):
+            # If no file and missing required fields, raise error
+            raise serializers.ValidationError({
+                'file': 'File is required for media upload.'
+            })
         
         return attrs
     

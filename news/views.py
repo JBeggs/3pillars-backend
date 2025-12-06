@@ -176,20 +176,22 @@ class ArticleViewSet(CompanyScopedViewSet):
         company = get_company_from_request(self.request)
         
         if not company:
+            # No company context
             if self.request.user.is_superuser:
                 return queryset
-            # If no company context but user is authenticated, show their own articles
+            # If authenticated but no company, show their own articles
             if self.request.user.is_authenticated:
                 queryset = queryset.filter(author=self.request.user)
             else:
+                # Anonymous users without company see nothing
                 return queryset.none()
         else:
-            # Filter by company - ALL authenticated users see ALL articles from the company
+            # Filter by company - ALL users see ALL articles from the company
             queryset = queryset.filter(company=company)
         
         # Filter by status based on user permissions
         if not self.request.user.is_authenticated:
-            # Anonymous: only published
+            # Anonymous: only published articles
             queryset = queryset.filter(status='published')
         else:
             # ALL authenticated users (including business owners) see ALL articles regardless of status

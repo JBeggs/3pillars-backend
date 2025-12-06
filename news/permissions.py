@@ -13,14 +13,16 @@ class HasCompanyAccess(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         company = get_company_from_request(request)
+        
+        # For read operations (GET, HEAD, OPTIONS), always allow access
+        # The queryset will handle filtering by company or returning empty
+        if request.method in permissions.SAFE_METHODS:
+            return True  # Allow read access - queryset handles filtering
+        
+        # For write operations, require company and authentication
         if not company:
             return False
         
-        # For read operations (GET, HEAD, OPTIONS), allow access if company ID is provided
-        if request.method in permissions.SAFE_METHODS:
-            return True  # Allow public read access when company ID is provided
-        
-        # For write operations, require authentication
         if not request.user.is_authenticated:
             return False
         

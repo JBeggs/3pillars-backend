@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+from crm.site.crmadminsite import crm_site
 from .models import FCMDevice, FCMMessage, UserNotificationSettings
 
 
@@ -67,4 +68,16 @@ class UserNotificationSettingsAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+# Register all models to crm_site as well (for custom admin interface)
+crm_site.register(FCMDevice, FCMDeviceAdmin)
+crm_site.register(FCMMessage, FCMMessageAdmin)
+crm_site.register(UserNotificationSettings, UserNotificationSettingsAdmin)
+
+
+# Register all models to crm_site as well (for custom admin interface)
+crm_site.register(FCMDevice, FCMDeviceAdmin)
+crm_site.register(FCMMessage, FCMMessageAdmin)
+crm_site.register(UserNotificationSettings, UserNotificationSettingsAdmin)
 

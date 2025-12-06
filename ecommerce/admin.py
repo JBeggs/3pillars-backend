@@ -1,4 +1,5 @@
 from django.contrib import admin
+from crm.site.crmadminsite import crm_site
 from .models import (
     EcommerceCompany, EcommerceProduct, Category, ProductImage,
     Cart, CartItem, Order, OrderItem, CompanyIntegrationSettings
@@ -118,4 +119,16 @@ class CompanyIntegrationSettingsAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+# Register all models to crm_site as well (for custom admin interface)
+crm_site.register(EcommerceCompany, EcommerceCompanyAdmin)
+crm_site.register(Category, CategoryAdmin)
+crm_site.register(EcommerceProduct, EcommerceProductAdmin)
+crm_site.register(ProductImage, ProductImageAdmin)
+crm_site.register(Cart, CartAdmin)
+crm_site.register(CartItem, CartItemAdmin)
+crm_site.register(Order, OrderAdmin)
+crm_site.register(OrderItem, OrderItemAdmin)
+crm_site.register(CompanyIntegrationSettings, CompanyIntegrationSettingsAdmin)
 

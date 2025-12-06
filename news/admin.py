@@ -3,6 +3,7 @@ Admin configuration for news platform models.
 """
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+from crm.site.crmadminsite import crm_site
 from .models import (
     Profile, Category, Tag, Media, Gallery, GalleryMedia,
     Article, ArticleMedia, Comment, Business, BusinessMedia,
@@ -318,4 +319,29 @@ class UserSessionAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+# Register all models to crm_site as well (for custom admin interface)
+crm_site.register(Profile, ProfileAdmin)
+crm_site.register(Category, CategoryAdmin)
+crm_site.register(Tag, TagAdmin)
+crm_site.register(Media, MediaAdmin)
+crm_site.register(Gallery, GalleryAdmin)
+crm_site.register(GalleryMedia, GalleryMediaAdmin)
+crm_site.register(Article, ArticleAdmin)
+crm_site.register(ArticleMedia, ArticleMediaAdmin)
+crm_site.register(Comment, CommentAdmin)
+crm_site.register(Business, BusinessAdmin)
+crm_site.register(BusinessMedia, BusinessMediaAdmin)
+crm_site.register(BusinessReview, BusinessReviewAdmin)
+crm_site.register(Advertisement, AdvertisementAdmin)
+crm_site.register(RSSSource, RSSSourceAdmin)
+crm_site.register(RSSArticleTracking, RSSArticleTrackingAdmin)
+crm_site.register(Notification, NotificationAdmin)
+crm_site.register(SiteSetting, SiteSettingAdmin)
+crm_site.register(TeamMember, TeamMemberAdmin)
+crm_site.register(Testimonial, TestimonialAdmin)
+crm_site.register(AudioRecording, AudioRecordingAdmin)
+crm_site.register(ContentImport, ContentImportAdmin)
+crm_site.register(UserSession, UserSessionAdmin)
 

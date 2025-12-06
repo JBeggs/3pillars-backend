@@ -159,7 +159,7 @@ class ArticleViewSet(CompanyScopedViewSet):
     """ViewSet for Article."""
     queryset = Article.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly, HasCompanyAccess, IsAuthorOrReadOnly]
-    filterset_fields = ['status', 'category', 'is_premium', 'is_breaking_news', 'is_trending']
+    filterset_fields = ['status', 'category', 'is_premium', 'is_breaking_news', 'is_trending', 'slug']
     search_fields = ['title', 'subtitle', 'excerpt', 'content']
     ordering_fields = ['published_at', 'created_at', 'views', 'likes']
     ordering = ['-published_at', '-created_at']

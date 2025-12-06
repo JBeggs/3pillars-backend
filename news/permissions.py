@@ -41,6 +41,23 @@ class HasCompanyAccess(permissions.BasePermission):
             if profile.role in ['admin', 'editor', 'author', 'business_owner']:
                 return True
         
+        # Business owners can edit their own businesses even if they don't own the company in header
+        # The object-level permission (IsBusinessOwnerOrReadOnly) will check actual ownership
+        # This allows business owners to pass HasCompanyAccess for Business operations
+        if hasattr(request.user, 'news_profile'):
+            profile = request.user.news_profile
+            if profile.role == 'business_owner':
+                # For Business operations, allow business owners to pass
+                # Object-level permission will verify they own the business
+                # Check if view has Business model in queryset
+                try:
+                    if hasattr(view, 'queryset') and view.queryset:
+                        model_name = view.queryset.model.__name__
+                        if model_name == 'Business':
+                            return True
+                except:
+                    pass
+        
         # Superusers can access any company
         if request.user.is_superuser:
             return True
@@ -52,7 +69,18 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
     """
     Object-level permission: only authors can edit their articles.
     Drafts can only be viewed by their author (or admin/editor).
+    Business owners can also create and edit articles.
     """
+    def has_permission(self, request, view):
+        # Allow business owners and authors to create articles
+        if request.method == 'POST' and request.user.is_authenticated:
+            if hasattr(request.user, 'news_profile'):
+                profile = request.user.news_profile
+                if profile.role in ['admin', 'editor', 'author', 'business_owner']:
+                    return True
+        # For other methods, allow (object-level permission will handle restrictions)
+        return True
+    
     def has_object_permission(self, request, view, obj):
         # Check if this is a draft article
         is_draft = hasattr(obj, 'status') and obj.status == 'draft'
@@ -87,11 +115,16 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
         if hasattr(obj, 'company') and obj.company.owner == request.user:
             return True
         
-        # Check user profile role
+        # Check user profile role - allow business owners to edit their own articles
         if hasattr(request.user, 'news_profile'):
             profile = request.user.news_profile
-            if profile.role in ['admin', 'editor']:
-                return True
+            if profile.role in ['admin', 'editor', 'business_owner']:
+                # Business owners can edit their own articles
+                if profile.role == 'business_owner' and hasattr(obj, 'author') and obj.author == request.user:
+                    return True
+                # Admins and editors can edit any article
+                if profile.role in ['admin', 'editor']:
+                    return True
         
         return False
 

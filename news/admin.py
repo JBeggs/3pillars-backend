@@ -234,8 +234,8 @@ class GalleryMediaAdmin(admin.ModelAdmin):
 
 @admin.register(ArticleMedia)
 class ArticleMediaAdmin(admin.ModelAdmin):
-    list_display = ['article', 'media', 'order', 'is_featured', 'created_at']
-    list_filter = ['article__company', 'is_featured', 'created_at']
+    list_display = ['article', 'media', 'sort_order', 'created_at']
+    list_filter = ['article__company', 'created_at']
     search_fields = ['article__title', 'media__filename']
     raw_id_fields = ['article', 'media']
     readonly_fields = ['created_at']
@@ -243,8 +243,8 @@ class ArticleMediaAdmin(admin.ModelAdmin):
 
 @admin.register(BusinessMedia)
 class BusinessMediaAdmin(admin.ModelAdmin):
-    list_display = ['business', 'media', 'order', 'is_featured', 'created_at']
-    list_filter = ['business__company', 'is_featured', 'created_at']
+    list_display = ['business', 'media', 'sort_order', 'created_at']
+    list_filter = ['business__company', 'created_at']
     search_fields = ['business__name', 'media__filename']
     raw_id_fields = ['business', 'media']
     readonly_fields = ['created_at']

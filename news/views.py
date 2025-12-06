@@ -390,11 +390,12 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
         return Notification.objects.filter(user=self.request.user)
 
 
-class SiteSettingViewSet(CompanyScopedViewSet):
+class SiteSettingViewSet(viewsets.ModelViewSet):
     """ViewSet for Site Setting."""
     queryset = SiteSetting.objects.all()
     serializer_class = SiteSettingSerializer
-    permission_classes = [IsAuthenticated, HasCompanyAccess]
+    # Allow public read access, require auth for write
+    permission_classes = [IsAuthenticatedOrReadOnly]
     search_fields = ['key', 'description']
     ordering_fields = ['key']
     ordering = ['key']
@@ -405,6 +406,7 @@ class SiteSettingViewSet(CompanyScopedViewSet):
         company = get_company_from_request(self.request)
         
         if not company:
+            # If no company ID provided, return empty (unless superuser)
             if self.request.user.is_superuser:
                 return queryset
             return queryset.none()
@@ -416,6 +418,34 @@ class SiteSettingViewSet(CompanyScopedViewSet):
             queryset = queryset.filter(is_public=True)
         
         return queryset
+    
+    def perform_create(self, serializer):
+        """Require company access for creating settings."""
+        company = get_company_from_request(self.request)
+        if not company:
+            raise PermissionDenied('Company context required. Provide X-Company-Id header.')
+        
+        # Check company access for write operations
+        if not (company.owner == self.request.user or 
+                (hasattr(company, 'users') and self.request.user in company.users.all()) or
+                self.request.user.is_superuser):
+            raise PermissionDenied('You do not have access to this company.')
+        
+        serializer.save(company=company)
+    
+    def perform_update(self, serializer):
+        """Require company access for updating settings."""
+        company = get_company_from_request(self.request)
+        if not company:
+            raise PermissionDenied('Company context required. Provide X-Company-Id header.')
+        
+        # Check company access for write operations
+        if not (company.owner == self.request.user or 
+                (hasattr(company, 'users') and self.request.user in company.users.all()) or
+                self.request.user.is_superuser):
+            raise PermissionDenied('You do not have access to this company.')
+        
+        serializer.save()
 
 
 class TeamMemberViewSet(CompanyScopedViewSet):

@@ -377,7 +377,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
             'article_media', 'created_at', 'updated_at', 'deleted_at'
         ]
         read_only_fields = [
-            'id', 'views', 'likes', 'shares', 'version', 'created_at', 'updated_at'
+            'id', 'company', 'views', 'likes', 'shares', 'version', 'created_at', 'updated_at'
         ]
     
     def get_article_media(self, obj):

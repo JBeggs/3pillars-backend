@@ -90,6 +90,11 @@ DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT', '3306')
 PYTHONANYWHERE_USERNAME = os.environ.get('PYTHONANYWHERE_USERNAME', '')
 
+# Fix common hostname typo: "pillars" -> "3pillars"
+if DB_HOST and DB_HOST.startswith('pillars.mysql.pythonanywhere-services.com'):
+    DB_HOST = DB_HOST.replace('pillars.mysql', '3pillars.mysql', 1)
+    print(f"⚠️  Fixed DB_HOST typo: now using {DB_HOST}")
+
 # Determine if we should use MySQL - prioritize MySQL if ANY credentials are provided
 USE_MYSQL = bool(DB_NAME and DB_USER and DB_PASSWORD and DB_HOST)
 
@@ -108,8 +113,10 @@ if USE_MYSQL:
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
                 'charset': 'utf8mb4',
             },
+            'CONN_MAX_AGE': 300,
         }
     }
+    print(f"✓ MySQL Config: {DB_HOST} / {DB_NAME} / {DB_USER}")
 elif ON_PYTHONANYWHERE:   
     # PythonAnywhere MySQL configuration
     # Prioritize explicit DB_HOST from .env, then construct from username

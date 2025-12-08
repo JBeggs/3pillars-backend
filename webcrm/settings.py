@@ -88,11 +88,6 @@ DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT', '3306')
 PYTHONANYWHERE_USERNAME = os.environ.get('PYTHONANYWHERE_USERNAME', '')
 
-# Debug: Print database configuration (without password)
-if DEBUG:
-    print(f"Database Config - DB_NAME: {DB_NAME}, DB_USER: {DB_USER}, DB_HOST: {DB_HOST}, DB_PORT: {DB_PORT}")
-    print(f"PythonAnywhere Detection: {ON_PYTHONANYWHERE}, Username: {PYTHONANYWHERE_USERNAME}")
-
 # Determine if we should use MySQL
 USE_MYSQL = bool(DB_NAME and DB_USER and DB_PASSWORD and DB_HOST)
 
@@ -142,8 +137,7 @@ if ON_PYTHONANYWHERE:
                 },
             }
         }
-        if DEBUG:
-            print(f"✓ Using MySQL: {DB_HOST} / {DB_NAME} / {DB_USER}")
+        # Debug output moved to after DEBUG is defined (see line ~242)
     else:
         # Fallback to SQLite if MySQL config is incomplete
         print("WARNING: MySQL configuration incomplete for PythonAnywhere, falling back to SQLite")

@@ -43,6 +43,45 @@ class CategorySerializer(serializers.ModelSerializer):
     
     def get_product_count(self, obj):
         return obj.products.count()
+    
+    def create(self, validated_data):
+        """Create category with auto-generated slug if not provided."""
+        from django.utils.text import slugify
+        
+        if 'slug' not in validated_data or not validated_data.get('slug'):
+            name = validated_data.get('name', '')
+            if name:
+                base_slug = slugify(name)
+                slug = base_slug
+                # Ensure uniqueness within company
+                company = validated_data.get('company')
+                counter = 1
+                while Category.objects.filter(company=company, slug=slug).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                validated_data['slug'] = slug
+        
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        """Update category, auto-generate slug if name changed and slug not provided."""
+        from django.utils.text import slugify
+        
+        # If name changed and slug not explicitly provided, regenerate slug
+        if 'name' in validated_data and 'slug' not in validated_data:
+            new_name = validated_data['name']
+            if new_name != instance.name:
+                base_slug = slugify(new_name)
+                slug = base_slug
+                # Ensure uniqueness within company
+                company = instance.company
+                counter = 1
+                while Category.objects.filter(company=company, slug=slug).exclude(id=instance.id).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                validated_data['slug'] = slug
+        
+        return super().update(instance, validated_data)
 
 
 class EcommerceProductSerializer(serializers.ModelSerializer):
@@ -81,7 +120,48 @@ class EcommerceProductSerializer(serializers.ModelSerializer):
     
     def validate_slug(self, value):
         """Ensure slug is lowercase and hyphenated."""
-        return value.lower().replace('_', '-')
+        if value:
+            return value.lower().replace('_', '-')
+        return value
+    
+    def create(self, validated_data):
+        """Create product with auto-generated slug if not provided."""
+        from django.utils.text import slugify
+        
+        if 'slug' not in validated_data or not validated_data.get('slug'):
+            name = validated_data.get('name', '')
+            if name:
+                base_slug = slugify(name)
+                slug = base_slug
+                # Ensure uniqueness within company
+                company = validated_data.get('company')
+                counter = 1
+                while EcommerceProduct.objects.filter(company=company, slug=slug).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                validated_data['slug'] = slug
+        
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        """Update product, auto-generate slug if name changed and slug not provided."""
+        from django.utils.text import slugify
+        
+        # If name changed and slug not explicitly provided, regenerate slug
+        if 'name' in validated_data and 'slug' not in validated_data:
+            new_name = validated_data['name']
+            if new_name != instance.name:
+                base_slug = slugify(new_name)
+                slug = base_slug
+                # Ensure uniqueness within company
+                company = instance.company
+                counter = 1
+                while EcommerceProduct.objects.filter(company=company, slug=slug).exclude(id=instance.id).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                validated_data['slug'] = slug
+        
+        return super().update(instance, validated_data)
 
 
 class ProductImageSerializer(serializers.ModelSerializer):

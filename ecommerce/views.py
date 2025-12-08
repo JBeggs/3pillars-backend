@@ -3,7 +3,7 @@ API viewsets for e-commerce multi-tenant product management.
 Based on JavaMellow Backend API Specification.
 """
 import logging
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -12,13 +12,14 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import EcommerceCompany, EcommerceProduct, Category, ProductImage
+from .models import EcommerceCompany, EcommerceProduct, Category, ProductImage, CompanyIntegrationSettings
 from .serializers import (
     EcommerceCompanySerializer,
     EcommerceProductSerializer,
     CategorySerializer,
     ProductImageSerializer,
     BulkOperationSerializer,
+    CompanyIntegrationSettingsSerializer,
 )
 from .permissions import IsCompanyOwnerOrReadOnly, IsCompanyMember
 from .utils import get_company_from_request, filter_by_company
@@ -483,4 +484,54 @@ class ProductImageViewSet(viewsets.ModelViewSet):
             'data': uploaded_images,
             'errors': errors if errors else None
         })
+
+
+class CompanyIntegrationSettingsViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Company Integration Settings (company-scoped, owner-only).
+    """
+    queryset = CompanyIntegrationSettings.objects.all()
+    serializer_class = CompanyIntegrationSettingsSerializer
+    permission_classes = [IsAuthenticated, IsCompanyOwnerOrReadOnly]
+    lookup_field = 'id'
+    
+    def get_queryset(self):
+        """Filter settings by company."""
+        company = get_company_from_request(self.request)
+        if not company:
+            return CompanyIntegrationSettings.objects.none()
+        return CompanyIntegrationSettings.objects.filter(company=company)
+    
+    def get_object(self):
+        """Get or create integration settings for company."""
+        company = get_company_from_request(self.request)
+        if not company:
+            return Response(
+                {'success': False, 'error': {'code': 'COMPANY_NOT_FOUND', 'message': 'Company not found'}},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        settings, created = CompanyIntegrationSettings.objects.get_or_create(company=company)
+        return settings
+    
+    def perform_create(self, serializer):
+        """Set company from request."""
+        company = get_company_from_request(self.request)
+        if not company:
+            raise serializers.ValidationError({'company': 'Company not found'})
+        serializer.save(company=company)
+    
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        """Get current company's integration settings."""
+        company = get_company_from_request(request)
+        if not company:
+            return Response(
+                {'success': False, 'error': {'code': 'COMPANY_NOT_FOUND', 'message': 'Company not found'}},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        settings, created = CompanyIntegrationSettings.objects.get_or_create(company=company)
+        serializer = self.get_serializer(settings)
+        return Response({'success': True, 'data': serializer.data})
 

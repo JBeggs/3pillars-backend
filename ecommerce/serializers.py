@@ -4,7 +4,7 @@ Serializers for e-commerce multi-tenant API.
 from rest_framework import serializers
 from .models import (
     EcommerceCompany, EcommerceProduct, Category, ProductImage,
-    Cart, CartItem, Order, OrderItem
+    Cart, CartItem, Order, OrderItem, CompanyIntegrationSettings
 )
 
 
@@ -264,4 +264,62 @@ class PudoShipmentSerializer(serializers.Serializer):
     parcel_description = serializers.CharField()
     parcel_value = serializers.DecimalField(max_digits=10, decimal_places=2)
     parcel_weight = serializers.DecimalField(max_digits=8, decimal_places=2)
+
+
+class CompanyIntegrationSettingsSerializer(serializers.ModelSerializer):
+    """Serializer for Company Integration Settings."""
+    company_name = serializers.CharField(source='company.name', read_only=True)
+    
+    class Meta:
+        model = CompanyIntegrationSettings
+        fields = [
+            'id', 'company', 'company_name',
+            'payment_gateway',
+            'yoco_secret_key', 'yoco_public_key', 'yoco_webhook_secret', 'yoco_sandbox_mode',
+            'courier_service',
+            'courier_guy_api_key', 'courier_guy_api_secret', 'courier_guy_account_number', 'courier_guy_sandbox_mode',
+            'payment_gateway_settings', 'courier_settings',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'company', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'yoco_secret_key': {'write_only': False},  # Allow reading for display (masked on frontend)
+            'yoco_webhook_secret': {'write_only': False},
+            'courier_guy_api_secret': {'write_only': False},
+        }
+    
+    def to_representation(self, instance):
+        """Mask sensitive fields when reading."""
+        data = super().to_representation(instance)
+        
+        # Mask secret keys (show only last 4 characters)
+        if data.get('yoco_secret_key'):
+            data['yoco_secret_key'] = self._mask_secret(data['yoco_secret_key'])
+        if data.get('yoco_webhook_secret'):
+            data['yoco_webhook_secret'] = self._mask_secret(data['yoco_webhook_secret'])
+        if data.get('courier_guy_api_secret'):
+            data['courier_guy_api_secret'] = self._mask_secret(data['courier_guy_api_secret'])
+        
+        return data
+    
+    def _mask_secret(self, value):
+        """Mask secret value, showing only last 4 characters."""
+        if not value or len(value) <= 4:
+            return '••••'
+        return '•' * (len(value) - 4) + value[-4:]
+    
+    def validate(self, data):
+        """Validate integration settings."""
+        # If updating secret keys, check if they're masked (user didn't change them)
+        # In that case, don't update them
+        if self.instance:
+            # Check if secret keys are masked (starts with •)
+            if 'yoco_secret_key' in data and data['yoco_secret_key'].startswith('•'):
+                data.pop('yoco_secret_key')  # Don't update if masked
+            if 'yoco_webhook_secret' in data and data['yoco_webhook_secret'].startswith('•'):
+                data.pop('yoco_webhook_secret')
+            if 'courier_guy_api_secret' in data and data['courier_guy_api_secret'].startswith('•'):
+                data.pop('courier_guy_api_secret')
+        
+        return data
 

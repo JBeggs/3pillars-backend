@@ -22,6 +22,7 @@ from api.serializers.auth import (
     RefreshTokenResponseSerializer,
     BusinessRegistrationSerializer,
     UserRegistrationSerializer,
+    CustomerRegistrationSerializer,
 )
 
 User = get_user_model()
@@ -202,16 +203,21 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 @permission_classes([AllowAny])
 def register(request):
     """
-    Registration endpoint - handles both user and business registration.
+    Registration endpoint - handles three types of registration:
     - If 'company_name' is provided: Business registration (creates new company)
+    - If 'company_slug' is provided: Customer registration (links to existing company)
     - Otherwise: User registration (connects to Riverside Herald)
     """
-    # Detect registration type based on presence of company_name
+    # Detect registration type
     is_business_registration = 'company_name' in request.data and request.data.get('company_name')
+    is_customer_registration = 'company_slug' in request.data and request.data.get('company_slug')
     
     if is_business_registration:
         # Business registration - creates new company
         serializer = BusinessRegistrationSerializer(data=request.data)
+    elif is_customer_registration:
+        # Customer registration - links to existing company (e.g., JavaMellow)
+        serializer = CustomerRegistrationSerializer(data=request.data)
     else:
         # User registration - connects to Riverside Herald
         serializer = UserRegistrationSerializer(data=request.data)
@@ -244,8 +250,15 @@ def register(request):
             profile_data = None
         
         # Return user data, company data, and tokens
+        if is_business_registration:
+            message = 'Registration successful. Your account is pending approval. You will be notified once approved.'
+        elif is_customer_registration:
+            message = 'Registration successful! Welcome to JavaMellow.'
+        else:
+            message = 'Registration successful!'
+        
         response_data = {
-            'message': 'Registration successful!' if not is_business_registration else 'Registration successful. Your account is pending approval. You will be notified once approved.',
+            'message': message,
             'user': UserSerializer(user).data,
             'company': {
                 'id': str(company.id),

@@ -165,6 +165,86 @@ class UserRegistrationSerializer(serializers.Serializer):
             }
 
 
+class CustomerRegistrationSerializer(serializers.Serializer):
+    """
+    Serializer for customer registration (links to existing company).
+    Creates a user account and adds them to the specified company.
+    Does NOT create news Profile (customers don't need Riverside Herald access).
+    """
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password_confirm = serializers.CharField(write_only=True, required=True)
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    company_slug = serializers.CharField(max_length=255, default='javamellow', required=False)
+    
+    def validate(self, attrs):
+        """Validate registration data."""
+        # Check if email already exists
+        if User.objects.filter(email=attrs['email']).exists():
+            raise serializers.ValidationError({'email': 'Email already registered'})
+        
+        # Validate password match
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({'password_confirm': 'Passwords do not match'})
+        
+        # Find company by slug
+        from ecommerce.models import EcommerceCompany
+        company_slug = attrs.get('company_slug', 'javamellow')
+        company = EcommerceCompany.objects.filter(slug=company_slug).first()
+        
+        if not company:
+            raise serializers.ValidationError({
+                'company_slug': f'Company with slug "{company_slug}" not found'
+            })
+        
+        attrs['company'] = company
+        return attrs
+    
+    def create(self, validated_data):
+        """Create user and add to company."""
+        from ecommerce.models import EcommerceCompany
+        from django.db import transaction
+        
+        password = validated_data.pop('password')
+        validated_data.pop('password_confirm')
+        company = validated_data.pop('company')
+        first_name = validated_data.get('first_name', '')
+        last_name = validated_data.get('last_name', '')
+        
+        with transaction.atomic():
+            # Generate username from email
+            email = validated_data['email']
+            username = email.split('@')[0]
+            # Ensure username is unique
+            base_username = username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            # Create user
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                is_active=True,
+            )
+            
+            # Add user to company's users ManyToMany field
+            if hasattr(company, 'users'):
+                company.users.add(user)
+            
+            # Do NOT create news Profile - customers don't need Riverside Herald access
+            
+            return {
+                'user': user,
+                'company': company,
+            }
+
+
 class BusinessRegistrationSerializer(serializers.Serializer):
     """
     Serializer for business registration.

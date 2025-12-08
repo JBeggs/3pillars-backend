@@ -8,6 +8,7 @@ from .views import (
     EcommerceProductViewSet,
     CategoryViewSet,
     ProductImageViewSet,
+    CompanyIntegrationSettingsViewSet,
 )
 from .views_cart import CartViewSet
 from .views_orders import OrderViewSet
@@ -20,6 +21,7 @@ router.register(r'companies', EcommerceCompanyViewSet, basename='ecommerce-compa
 router.register(r'products', EcommerceProductViewSet, basename='ecommerce-product')
 router.register(r'categories', CategoryViewSet, basename='ecommerce-category')
 router.register(r'products/images', ProductImageViewSet, basename='product-image')
+router.register(r'integration-settings', CompanyIntegrationSettingsViewSet, basename='integration-settings')
 router.register(r'carts', CartViewSet, basename='cart')
 router.register(r'orders', OrderViewSet, basename='order')
 router.register(r'pudo', PudoViewSet, basename='pudo')

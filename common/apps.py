@@ -19,6 +19,11 @@ class CommonConfig(AppConfig):
         self.nes = NotifEmailSender()       # NOQA
         self.nes.start()
         if not settings.TESTING:
+            # Disable background threads on PythonAnywhere to prevent database timeout issues
+            from webcrm.settings import ON_PYTHONANYWHERE
+            if ON_PYTHONANYWHERE:
+                return  # Skip starting background threads on PythonAnywhere
+            
             from common.utils.reminders_sender import RemindersSender
             try:
                 self.rs = RemindersSender()     # NOQA

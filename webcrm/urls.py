@@ -48,11 +48,8 @@ if settings.STATIC_ROOT and hasattr(settings.STATIC_ROOT, 'exists') and settings
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
 
-# Serve media files (only in DEBUG mode)
-if settings.DEBUG:
-    urlpatterns += static(
-        settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
-    )
+# Serve media files (only in DEBUG mode - PythonAnywhere serves media via static files mapping)
+# Media files are served via PythonAnywhere's static files configuration, not Django
 
 if 'rosetta' in settings.INSTALLED_APPS:
     urlpatterns += [

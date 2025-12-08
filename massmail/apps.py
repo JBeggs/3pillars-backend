@@ -9,6 +9,11 @@ class MassmailConfig(AppConfig):
     default_auto_field = 'django.db.models.AutoField'
 
     def ready(self):
+        # Disable background threads on PythonAnywhere to prevent database timeout issues
+        from webcrm.settings import ON_PYTHONANYWHERE
+        if ON_PYTHONANYWHERE:
+            return  # Skip starting background threads on PythonAnywhere
+        
         from massmail.utils.sendmassmail import SendMassmail
         try:
             self.smm = SendMassmail()       # NOQA

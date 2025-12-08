@@ -116,11 +116,14 @@ if USE_MYSQL:
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
                 'charset': 'utf8mb4',
+                'connect_timeout': 10,
+                'read_timeout': 10,
+                'write_timeout': 10,
             },
-            'CONN_MAX_AGE': 300,
+            'CONN_MAX_AGE': 0,  # Disable persistent connections to avoid timeout issues
         }
     }
-    print(f"✓ MySQL Config: {DB_HOST} / {DB_NAME} / {DB_USER}")
+    # MySQL config loaded
 elif ON_PYTHONANYWHERE:   
     # PythonAnywhere MySQL configuration
     # Prioritize explicit DB_HOST from .env, then construct from username
@@ -164,10 +167,13 @@ elif ON_PYTHONANYWHERE:
                 'OPTIONS': {
                     'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
                     'charset': 'utf8mb4',
+                    'connect_timeout': 10,
+                    'read_timeout': 10,
+                    'write_timeout': 10,
                 },
+                'CONN_MAX_AGE': 0,  # Disable persistent connections
             }
         }
-        # Debug output moved to after DEBUG is defined (see line ~242)
     else:
         # MySQL config incomplete - raise error instead of falling back to SQLite
         missing = []

@@ -664,32 +664,6 @@ class CompanyIntegrationSettings(models.Model):
             'account_number': self.courier_guy_account_number,
             'sandbox_mode': self.courier_guy_sandbox_mode,
         }
-    
-    def generate_order_number(self):
-        """Generate unique order number for company."""
-        from django.utils import timezone
-        year = timezone.now().year
-        # Get sequence number for this company and year
-        last_order = Order.objects.filter(
-            company=self.company,
-            order_number__startswith=f"ORD-{year}-"
-        ).order_by('-order_number').first()
-        
-        if last_order:
-            try:
-                sequence = int(last_order.order_number.split('-')[-1]) + 1
-            except (ValueError, IndexError):
-                sequence = 1
-        else:
-            sequence = 1
-        
-        return f"ORD-{year}-{sequence:04d}"
-    
-    def save(self, *args, **kwargs):
-        """Generate order number if not set."""
-        if not self.order_number:
-            self.order_number = self.generate_order_number()
-        super().save(*args, **kwargs)
 
 
 class OrderItem(models.Model):

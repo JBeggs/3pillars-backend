@@ -5,15 +5,21 @@ from datetime import datetime as dt
 from django.utils.translation import gettext_lazy as _
 
 # Load environment variables from .env file
+# Set BASE_DIR early for .env loading
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 try:
     from dotenv import load_dotenv
-    # Load .env file from project root (parent of webcrm)
-    BASE_DIR = Path(__file__).resolve().parent.parent
     env_path = BASE_DIR / '.env'
     if env_path.exists():
         load_dotenv(env_path)
+        print(f"✓ Loaded .env file from: {env_path}")
+    else:
+        print(f"⚠ .env file not found at: {env_path}")
 except ImportError:
-    pass  # python-dotenv not installed, skip .env loading
+    print("⚠ python-dotenv not installed. Install with: pip install python-dotenv")
+except Exception as e:
+    print(f"⚠ Error loading .env file: {e}")
 
 # Try to use pymysql as MySQLdb (for PythonAnywhere compatibility)
 try:
@@ -80,25 +86,74 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT', '3306')
+PYTHONANYWHERE_USERNAME = os.environ.get('PYTHONANYWHERE_USERNAME', '')
+
+# Debug: Print database configuration (without password)
+if DEBUG:
+    print(f"Database Config - DB_NAME: {DB_NAME}, DB_USER: {DB_USER}, DB_HOST: {DB_HOST}, DB_PORT: {DB_PORT}")
+    print(f"PythonAnywhere Detection: {ON_PYTHONANYWHERE}, Username: {PYTHONANYWHERE_USERNAME}")
+
+# Determine if we should use MySQL
 USE_MYSQL = bool(DB_NAME and DB_USER and DB_PASSWORD and DB_HOST)
 
 if ON_PYTHONANYWHERE:   
     # PythonAnywhere MySQL configuration
-    # Get credentials from environment variables or use defaults
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': DB_NAME or os.environ.get('DB_NAME', 'yourusername$crm_db'),
-            'USER': DB_USER or os.environ.get('DB_USER', os.environ.get('PYTHONANYWHERE_USERNAME', 'yourusername')),
-            'PASSWORD': DB_PASSWORD or os.environ.get('DB_PASSWORD', ''),
-            'HOST': DB_HOST or os.environ.get('DB_HOST', 'yourusername.mysql.pythonanywhere-services.com'),
-            'PORT': DB_PORT,
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                'charset': 'utf8mb4',
-            },
+    # Prioritize explicit DB_HOST from .env, then construct from username
+    if not DB_HOST:
+        if PYTHONANYWHERE_USERNAME:
+            # Auto-construct hostname from PythonAnywhere username
+            DB_HOST = f'{PYTHONANYWHERE_USERNAME}.mysql.pythonanywhere-services.com'
+        else:
+            # Try to extract username from HTTP_HOST or use default
+            http_host = os.environ.get('HTTP_HOST', '')
+            if 'pythonanywhere.com' in http_host:
+                username = http_host.split('.')[0]
+                DB_HOST = f'{username}.mysql.pythonanywhere-services.com'
+            else:
+                DB_HOST = '3pillars.mysql.pythonanywhere-services.com'  # Default fallback
+    
+    if not DB_NAME:
+        if PYTHONANYWHERE_USERNAME:
+            DB_NAME = f'{PYTHONANYWHERE_USERNAME}$crm_db'
+        elif DB_USER:
+            DB_NAME = f'{DB_USER}$crm_db'
+        else:
+            DB_NAME = '3pillars$crm_db'  # Default fallback
+    
+    if not DB_USER:
+        if PYTHONANYWHERE_USERNAME:
+            DB_USER = PYTHONANYWHERE_USERNAME
+        else:
+            DB_USER = '3pillars'  # Default fallback
+    
+    # Ensure we have all required values
+    if DB_NAME and DB_USER and DB_PASSWORD and DB_HOST:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': DB_NAME,
+                'USER': DB_USER,
+                'PASSWORD': DB_PASSWORD,
+                'HOST': DB_HOST,
+                'PORT': DB_PORT,
+                'OPTIONS': {
+                    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                    'charset': 'utf8mb4',
+                },
+            }
         }
-    }
+        if DEBUG:
+            print(f"✓ Using MySQL: {DB_HOST} / {DB_NAME} / {DB_USER}")
+    else:
+        # Fallback to SQLite if MySQL config is incomplete
+        print("WARNING: MySQL configuration incomplete for PythonAnywhere, falling back to SQLite")
+        print(f"  Missing: DB_NAME={DB_NAME}, DB_USER={DB_USER}, DB_PASSWORD={'***' if DB_PASSWORD else 'MISSING'}, DB_HOST={DB_HOST}")
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'crm_db',
+            }
+        }
 elif USE_MYSQL:
     # MySQL configuration from environment variables
     DATABASES = {

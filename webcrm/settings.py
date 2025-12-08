@@ -70,6 +70,10 @@ if '3pillars.pythonanywhere.com' not in ALLOWED_HOSTS:
 if 'riverside-herald.vercel.app' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('riverside-herald.vercel.app')
 
+# Always add java-mellow-project.vercel.app if not already present
+if 'java-mellow-project.vercel.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('java-mellow-project.vercel.app')
+
 # Database Configuration
 # PythonAnywhere typically uses MySQL, but PostgreSQL and SQLite are also supported
 

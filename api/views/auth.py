@@ -113,12 +113,17 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                             company.users.add(user)
                     
                     if company:
+                        # Check if user is the owner of this company
+                        is_owner = company.owner == user
                         response.data['company'] = {
                             'id': str(company.id),
                             'name': company.name,
                             'slug': company.slug,
                             'email': company.email,
+                            'is_owner': is_owner,
                         }
+                        # Also add is_owner to user data for easy access
+                        response.data['user']['is_owner'] = is_owner
                     
                     # Get news profile if it exists
                     try:

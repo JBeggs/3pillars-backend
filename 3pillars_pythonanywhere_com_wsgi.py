@@ -17,18 +17,5 @@ if project_home not in sys.path:
 os.environ['DJANGO_SETTINGS_MODULE'] = 'webcrm.settings'
 
 # serve django via WSGI
-try:
-    from django.core.wsgi import get_wsgi_application
-    application = get_wsgi_application()
-except Exception as e:
-    # Log error to a file we can check
-    import traceback
-    error_file = '/home/3pillars/wsgi_error.log'
-    with open(error_file, 'a') as f:
-        f.write(f"\n{'='*60}\n")
-        f.write(f"WSGI Error: {e}\n")
-        f.write(traceback.format_exc())
-        f.write(f"{'='*60}\n")
-    
-    # Re-raise so PythonAnywhere sees it
-    raise
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()

@@ -34,7 +34,7 @@ from django.urls import re_path
 
 # Always serve static files from STATIC_ROOT (for both DEBUG and production in local dev)
 # This must be added BEFORE i18n_patterns to ensure static files are accessible
-if settings.STATIC_ROOT and settings.STATIC_ROOT.exists():
+if settings.STATIC_ROOT and hasattr(settings.STATIC_ROOT, 'exists') and settings.STATIC_ROOT.exists():
     urlpatterns += [
         re_path(
             r'^static/(?P<path>.*)$',
@@ -48,10 +48,11 @@ if settings.STATIC_ROOT and settings.STATIC_ROOT.exists():
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
 
-# Serve media files
-urlpatterns += static(
-    settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
-)
+# Serve media files (only in DEBUG mode)
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
+    )
 
 if 'rosetta' in settings.INSTALLED_APPS:
     urlpatterns += [

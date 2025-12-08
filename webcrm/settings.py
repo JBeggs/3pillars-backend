@@ -342,11 +342,11 @@ if not ON_PYTHONANYWHERE:
         WHITENOISE_MIDDLEWARE = ['whitenoise.middleware.WhiteNoiseMiddleware']
     except ImportError:
         # WhiteNoise not installed - skip it (for local dev without whitenoise)
-        pass
+        WHITENOISE_MIDDLEWARE = []
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    *WHITENOISE_MIDDLEWARE,
+] + WHITENOISE_MIDDLEWARE + [
     'corsheaders.middleware.CorsMiddleware',  # CORS early, before CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',

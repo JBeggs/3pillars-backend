@@ -580,6 +580,7 @@ SIMPLE_JWT = {
 
 # CORS Settings (for React frontend and Flutter app)
 CORS_ALLOWED_ORIGINS = [
+    'https://java-mellow-project.vercel.app',
     # React frontend (3piller) - Production (Vercel)
     "https://3pillars-frontend.vercel.app",
     # Riverside Herald frontend - Production (Vercel)

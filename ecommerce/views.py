@@ -3,6 +3,9 @@ API viewsets for e-commerce multi-tenant product management.
 Based on JavaMellow Backend API Specification.
 """
 import logging
+import uuid
+from pathlib import Path
+from django.conf import settings
 from rest_framework import viewsets, status, filters, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -403,23 +406,39 @@ class ProductImageViewSet(viewsets.ModelViewSet):
             )
         
         # Save file to local storage
-        from django.conf import settings
-        from pathlib import Path
-        import uuid
+        file_path = None
+        unique_filename = None
+        try:
+            # Ensure MEDIA_ROOT exists
+            media_root = Path(settings.MEDIA_ROOT)
+            if not media_root.exists():
+                media_root.mkdir(parents=True, exist_ok=True)
+            
+            # Create directory structure: media/companies/{company_id}/products/
+            company_media_dir = media_root / 'companies' / str(company.id) / 'products'
+            company_media_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Generate unique filename
+            file_ext = Path(file.name).suffix or '.jpg'
+            unique_filename = f"{uuid.uuid4()}{file_ext}"
+            file_path = company_media_dir / unique_filename
+            
+            # Save file
+            with open(file_path, 'wb') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
+        except Exception as e:
+            logger.error(f"Error saving file: {e}", exc_info=True)
+            return Response(
+                {'success': False, 'error': {'code': 'FILE_SAVE_ERROR', 'message': f'Failed to save file: {str(e)}'}},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
-        # Create directory structure: media/companies/{company_id}/products/
-        company_media_dir = Path(settings.MEDIA_ROOT) / 'companies' / str(company.id) / 'products'
-        company_media_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Generate unique filename
-        file_ext = Path(file.name).suffix
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
-        file_path = company_media_dir / unique_filename
-        
-        # Save file
-        with open(file_path, 'wb') as destination:
-            for chunk in file.chunks():
-                destination.write(chunk)
+        if not file_path or not unique_filename:
+            return Response(
+                {'success': False, 'error': {'code': 'FILE_SAVE_ERROR', 'message': 'Failed to save file'}},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
         # Get image dimensions if possible
         width = None
@@ -508,23 +527,28 @@ class ProductImageViewSet(viewsets.ModelViewSet):
                     continue
                 
                 # Save file to local storage
-                from django.conf import settings
-                from pathlib import Path
-                import uuid
-                
-                # Create directory structure: media/companies/{company_id}/products/
-                company_media_dir = Path(settings.MEDIA_ROOT) / 'companies' / str(company.id) / 'products'
-                company_media_dir.mkdir(parents=True, exist_ok=True)
-                
-                # Generate unique filename
-                file_ext = Path(file.name).suffix
-                unique_filename = f"{uuid.uuid4()}{file_ext}"
-                file_path = company_media_dir / unique_filename
-                
-                # Save file
-                with open(file_path, 'wb') as destination:
-                    for chunk in file.chunks():
-                        destination.write(chunk)
+                try:
+                    # Ensure MEDIA_ROOT exists
+                    media_root = Path(settings.MEDIA_ROOT)
+                    if not media_root.exists():
+                        media_root.mkdir(parents=True, exist_ok=True)
+                    
+                    # Create directory structure: media/companies/{company_id}/products/
+                    company_media_dir = media_root / 'companies' / str(company.id) / 'products'
+                    company_media_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    # Generate unique filename
+                    file_ext = Path(file.name).suffix or '.jpg'
+                    unique_filename = f"{uuid.uuid4()}{file_ext}"
+                    file_path = company_media_dir / unique_filename
+                    
+                    # Save file
+                    with open(file_path, 'wb') as destination:
+                        for chunk in file.chunks():
+                            destination.write(chunk)
+                except Exception as e:
+                    errors.append(f'{file.name}: Failed to save - {str(e)}')
+                    continue
                 
                 # Get image dimensions if possible
                 width = None

@@ -97,7 +97,7 @@ PYTHONANYWHERE_USERNAME = os.environ.get('PYTHONANYWHERE_USERNAME', '')
 # Fix common hostname typo: "pillars" -> "3pillars"
 if DB_HOST and DB_HOST.startswith('pillars.mysql.pythonanywhere-services.com'):
     DB_HOST = DB_HOST.replace('pillars.mysql', '3pillars.mysql', 1)
-    print(f"⚠️  Fixed DB_HOST typo: now using {DB_HOST}")
+        # Fixed DB_HOST typo
 
 # Determine if we should use MySQL - prioritize MySQL if ANY credentials are provided
 USE_MYSQL = bool(DB_NAME and DB_USER and DB_PASSWORD and DB_HOST)
@@ -415,21 +415,9 @@ else:
 try:
     if not MEDIA_ROOT.exists():
         MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
-    # Ensure it's writable (convert Path to string for os.access)
-    if not os.access(str(MEDIA_ROOT), os.W_OK):
-        print(f"⚠️ WARNING: MEDIA_ROOT {MEDIA_ROOT} is not writable")
-except Exception as e:
-    print(f"⚠️ WARNING: Could not create MEDIA_ROOT {MEDIA_ROOT}: {e}")
-    # Fallback to a subdirectory that should work
-    try:
-        fallback_media = BASE_DIR / 'media'
-        if not fallback_media.exists():
-            fallback_media.mkdir(parents=True, exist_ok=True)
-        MEDIA_ROOT = fallback_media
-        print(f"✓ Using fallback MEDIA_ROOT: {MEDIA_ROOT}")
-    except Exception as fallback_error:
-        print(f"⚠️ WARNING: Fallback MEDIA_ROOT also failed: {fallback_error}")
-        # Last resort - let Django handle it
+except Exception:
+    # Silently fail - Django will handle it
+    pass
 
 FIXTURE_DIRS = ['tests/fixtures']
 

@@ -74,10 +74,12 @@ if 'riverside-herald.vercel.app' not in ALLOWED_HOSTS:
 # PythonAnywhere typically uses MySQL, but PostgreSQL and SQLite are also supported
 
 # Check if we're on PythonAnywhere
+# Also check if we have MySQL credentials - if so, force MySQL usage
 ON_PYTHONANYWHERE = (
     'pythonanywhere.com' in os.environ.get('HTTP_HOST', '') or
     'pythonanywhere.com' in os.environ.get('SERVER_NAME', '') or
-    bool(os.environ.get('PYTHONANYWHERE_USERNAME', ''))
+    bool(os.environ.get('PYTHONANYWHERE_USERNAME', '')) or
+    '3pillars.mysql.pythonanywhere-services.com' in os.environ.get('DB_HOST', '')
 )
 
 # Check if MySQL credentials are provided via environment variables
@@ -88,10 +90,27 @@ DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT', '3306')
 PYTHONANYWHERE_USERNAME = os.environ.get('PYTHONANYWHERE_USERNAME', '')
 
-# Determine if we should use MySQL
+# Determine if we should use MySQL - prioritize MySQL if ANY credentials are provided
 USE_MYSQL = bool(DB_NAME and DB_USER and DB_PASSWORD and DB_HOST)
 
-if ON_PYTHONANYWHERE:   
+# PRIORITY: Use MySQL if credentials exist, regardless of PythonAnywhere detection
+if USE_MYSQL:
+    # MySQL configuration from environment variables (highest priority)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            },
+        }
+    }
+elif ON_PYTHONANYWHERE:   
     # PythonAnywhere MySQL configuration
     # Prioritize explicit DB_HOST from .env, then construct from username
     if not DB_HOST:
@@ -139,31 +158,20 @@ if ON_PYTHONANYWHERE:
         }
         # Debug output moved to after DEBUG is defined (see line ~242)
     else:
-        # Fallback to SQLite if MySQL config is incomplete
-        print("WARNING: MySQL configuration incomplete for PythonAnywhere, falling back to SQLite")
-        print(f"  Missing: DB_NAME={DB_NAME}, DB_USER={DB_USER}, DB_PASSWORD={'***' if DB_PASSWORD else 'MISSING'}, DB_HOST={DB_HOST}")
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'crm_db',
-            }
-        }
-elif USE_MYSQL:
-    # MySQL configuration from environment variables
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': DB_NAME,
-            'USER': DB_USER,
-            'PASSWORD': DB_PASSWORD,
-            'HOST': DB_HOST,
-            'PORT': DB_PORT,
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                'charset': 'utf8mb4',
-            },
-        }
-    }
+        # MySQL config incomplete - raise error instead of falling back to SQLite
+        missing = []
+        if not DB_NAME: missing.append('DB_NAME')
+        if not DB_USER: missing.append('DB_USER')
+        if not DB_PASSWORD: missing.append('DB_PASSWORD')
+        if not DB_HOST: missing.append('DB_HOST')
+        raise Exception(
+            f"MySQL configuration incomplete! Missing: {', '.join(missing)}\n"
+            f"Please set these in your .env file:\n"
+            f"DB_HOST=3pillars.mysql.pythonanywhere-services.com\n"
+            f"DB_USER=3pillars\n"
+            f"DB_NAME=3pillars$crm_db\n"
+            f"DB_PASSWORD=your_password"
+        )
 elif os.environ.get('DATABASE_URL'):
     # Support for DATABASE_URL (PostgreSQL, MySQL, etc.)
     try:

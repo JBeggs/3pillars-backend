@@ -412,11 +412,24 @@ else:
     MEDIA_ROOT = BASE_DIR / 'media'
 
 # Ensure media directory exists
-if not MEDIA_ROOT.exists():
-    try:
+try:
+    if not MEDIA_ROOT.exists():
         MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
-    except Exception:
-        pass  # Directory creation may fail in some environments
+    # Ensure it's writable (convert Path to string for os.access)
+    if not os.access(str(MEDIA_ROOT), os.W_OK):
+        print(f"⚠️ WARNING: MEDIA_ROOT {MEDIA_ROOT} is not writable")
+except Exception as e:
+    print(f"⚠️ WARNING: Could not create MEDIA_ROOT {MEDIA_ROOT}: {e}")
+    # Fallback to a subdirectory that should work
+    try:
+        fallback_media = BASE_DIR / 'media'
+        if not fallback_media.exists():
+            fallback_media.mkdir(parents=True, exist_ok=True)
+        MEDIA_ROOT = fallback_media
+        print(f"✓ Using fallback MEDIA_ROOT: {MEDIA_ROOT}")
+    except Exception as fallback_error:
+        print(f"⚠️ WARNING: Fallback MEDIA_ROOT also failed: {fallback_error}")
+        # Last resort - let Django handle it
 
 FIXTURE_DIRS = ['tests/fixtures']
 

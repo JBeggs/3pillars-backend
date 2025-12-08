@@ -402,17 +402,60 @@ class ProductImageViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # TODO: Upload to cloud storage (S3, Cloudinary, etc.)
-        # For now, return a placeholder response
-        # In production, implement actual file upload
+        # Save file to local storage
+        from django.conf import settings
+        from pathlib import Path
+        import uuid
+        
+        # Create directory structure: media/companies/{company_id}/products/
+        company_media_dir = Path(settings.MEDIA_ROOT) / 'companies' / str(company.id) / 'products'
+        company_media_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        file_ext = Path(file.name).suffix
+        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        file_path = company_media_dir / unique_filename
+        
+        # Save file
+        with open(file_path, 'wb') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+        
+        # Get image dimensions if possible
+        width = None
+        height = None
+        try:
+            from PIL import Image
+            img = Image.open(file_path)
+            width, height = img.size
+        except ImportError:
+            pass  # PIL not available
+        except Exception:
+            pass  # Couldn't read image dimensions
+        
+        # Build URLs - use request to get absolute URL
+        request_host = request.get_host() if hasattr(request, 'get_host') else None
+        if request_host and not request_host.startswith('http'):
+            scheme = 'https' if request.is_secure() else 'http'
+            base_url = f"{scheme}://{request_host}"
+        else:
+            base_url = ''
+        
+        media_url = settings.MEDIA_URL.rstrip('/')
+        relative_path = f"companies/{company.id}/products/{unique_filename}"
+        
+        if base_url:
+            image_url = f"{base_url}{media_url}/{relative_path}"
+        else:
+            image_url = f"{media_url}/{relative_path}"
         
         image_data = {
-            'url': f'https://cdn.example.com/companies/{company.id}/products/{file.name}',
-            'thumbnail_url': f'https://cdn.example.com/companies/{company.id}/products/thumb_{file.name}',
+            'url': image_url,
+            'thumbnail_url': image_url,  # Same URL for now, can add thumbnail generation later
             'filename': file.name,
             'size': file.size,
-            'width': None,  # Would be set after image processing
-            'height': None,
+            'width': width,
+            'height': height,
             'mime_type': file.content_type,
         }
         
@@ -421,7 +464,7 @@ class ProductImageViewSet(viewsets.ModelViewSet):
             company=company,
             url=image_data['url'],
             thumbnail_url=image_data['thumbnail_url'],
-            filename=image_data['filename'],
+            filename=file.name,
             size=image_data['size'],
             width=image_data['width'],
             height=image_data['height'],
@@ -464,13 +507,61 @@ class ProductImageViewSet(viewsets.ModelViewSet):
                     errors.append(f'{file.name}: File size exceeds 5MB')
                     continue
                 
-                # TODO: Upload to cloud storage
+                # Save file to local storage
+                from django.conf import settings
+                from pathlib import Path
+                import uuid
+                
+                # Create directory structure: media/companies/{company_id}/products/
+                company_media_dir = Path(settings.MEDIA_ROOT) / 'companies' / str(company.id) / 'products'
+                company_media_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Generate unique filename
+                file_ext = Path(file.name).suffix
+                unique_filename = f"{uuid.uuid4()}{file_ext}"
+                file_path = company_media_dir / unique_filename
+                
+                # Save file
+                with open(file_path, 'wb') as destination:
+                    for chunk in file.chunks():
+                        destination.write(chunk)
+                
+                # Get image dimensions if possible
+                width = None
+                height = None
+                try:
+                    from PIL import Image
+                    img = Image.open(file_path)
+                    width, height = img.size
+                except ImportError:
+                    pass
+                except Exception:
+                    pass
+                
+                # Build URLs - use request to get absolute URL
+                request_host = request.get_host() if hasattr(request, 'get_host') else None
+                if request_host and not request_host.startswith('http'):
+                    scheme = 'https' if request.is_secure() else 'http'
+                    base_url = f"{scheme}://{request_host}"
+                else:
+                    base_url = ''
+                
+                media_url = settings.MEDIA_URL.rstrip('/')
+                relative_path = f"companies/{company.id}/products/{unique_filename}"
+                
+                if base_url:
+                    image_url = f"{base_url}{media_url}/{relative_path}"
+                else:
+                    image_url = f"{media_url}/{relative_path}"
+                
                 product_image = ProductImage.objects.create(
                     company=company,
-                    url=f'https://cdn.example.com/companies/{company.id}/products/{file.name}',
-                    thumbnail_url=f'https://cdn.example.com/companies/{company.id}/products/thumb_{file.name}',
+                    url=image_url,
+                    thumbnail_url=image_url,
                     filename=file.name,
                     size=file.size,
+                    width=width,
+                    height=height,
                     mime_type=file.content_type,
                 )
                 

@@ -4,6 +4,17 @@ from pathlib import Path
 from datetime import datetime as dt
 from django.utils.translation import gettext_lazy as _
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    # Load .env file from project root (parent of webcrm)
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    env_path = BASE_DIR / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+except ImportError:
+    pass  # python-dotenv not installed, skip .env loading
+
 # Try to use pymysql as MySQLdb (for PythonAnywhere compatibility)
 try:
     import pymysql
@@ -63,17 +74,41 @@ ON_PYTHONANYWHERE = (
     bool(os.environ.get('PYTHONANYWHERE_USERNAME', ''))
 )
 
+# Check if MySQL credentials are provided via environment variables
+DB_NAME = os.environ.get('DB_NAME')
+DB_USER = os.environ.get('DB_USER')
+DB_PASSWORD = os.environ.get('DB_PASSWORD')
+DB_HOST = os.environ.get('DB_HOST')
+DB_PORT = os.environ.get('DB_PORT', '3306')
+USE_MYSQL = bool(DB_NAME and DB_USER and DB_PASSWORD and DB_HOST)
+
 if ON_PYTHONANYWHERE:   
     # PythonAnywhere MySQL configuration
     # Get credentials from environment variables or use defaults
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('DB_NAME', 'yourusername$crm_db'),
-            'USER': os.environ.get('DB_USER', os.environ.get('PYTHONANYWHERE_USERNAME', 'yourusername')),
-            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', 'yourusername.mysql.pythonanywhere-services.com'),
-            'PORT': os.environ.get('DB_PORT', '3306'),
+            'NAME': DB_NAME or os.environ.get('DB_NAME', 'yourusername$crm_db'),
+            'USER': DB_USER or os.environ.get('DB_USER', os.environ.get('PYTHONANYWHERE_USERNAME', 'yourusername')),
+            'PASSWORD': DB_PASSWORD or os.environ.get('DB_PASSWORD', ''),
+            'HOST': DB_HOST or os.environ.get('DB_HOST', 'yourusername.mysql.pythonanywhere-services.com'),
+            'PORT': DB_PORT,
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            },
+        }
+    }
+elif USE_MYSQL:
+    # MySQL configuration from environment variables
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
                 'charset': 'utf8mb4',
@@ -82,14 +117,23 @@ if ON_PYTHONANYWHERE:
     }
 elif os.environ.get('DATABASE_URL'):
     # Support for DATABASE_URL (PostgreSQL, MySQL, etc.)
-    import dj_database_url
-    db_config = dj_database_url.config(
-        conn_max_age=300,
-        conn_health_checks=True,
-    )
-    DATABASES = {
-        'default': db_config
-    }
+    try:
+        import dj_database_url
+        db_config = dj_database_url.config(
+            conn_max_age=300,
+            conn_health_checks=True,
+        )
+        DATABASES = {
+            'default': db_config
+        }
+    except ImportError:
+        # dj_database_url not installed, fall back to SQLite
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'crm_db',
+            }
+        }
 else:
     # Local development - use SQLite
     DATABASES = {

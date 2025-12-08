@@ -32,19 +32,20 @@ from django.conf.urls.static import static
 from django.views.static import serve
 from django.urls import re_path
 
-# Always serve static files from STATIC_ROOT (for both DEBUG and production in local dev)
-# This must be added BEFORE i18n_patterns to ensure static files are accessible
-if settings.STATIC_ROOT and hasattr(settings.STATIC_ROOT, 'exists') and settings.STATIC_ROOT.exists():
+# Serve static files
+# On PythonAnywhere, static files are served via web server mapping, but Django can serve as fallback
+if settings.STATIC_ROOT:
+    static_root_path = str(settings.STATIC_ROOT) if hasattr(settings.STATIC_ROOT, '__str__') else settings.STATIC_ROOT
     urlpatterns += [
         re_path(
             r'^static/(?P<path>.*)$',
             serve,
-            {'document_root': str(settings.STATIC_ROOT)},
+            {'document_root': static_root_path},
         ),
     ]
 
 # Add staticfiles URL patterns (serves from STATICFILES_DIRS and app static folders)
-# This only works when DEBUG=True
+# This works in DEBUG mode or as fallback
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
 

@@ -26,16 +26,18 @@ class CourierGuyService:
         """
         Initialize Courier Guy service for a company.
         
+        Uses company-specific settings if available, otherwise falls back to global settings.
+        
         Args:
             company: EcommerceCompany instance
         """
         self.company = company
         self.integration_settings = self._get_integration_settings()
         self.credentials = self.integration_settings.get_courier_guy_credentials()
-        self.base_url = self.SANDBOX_BASE_URL if self.credentials['sandbox_mode'] else self.PRODUCTION_BASE_URL
+        self.base_url = self.SANDBOX_BASE_URL if self.credentials.get('sandbox_mode', True) else self.PRODUCTION_BASE_URL
     
     def _get_integration_settings(self) -> CompanyIntegrationSettings:
-        """Get or create integration settings for company."""
+        """Get or create integration settings for company (will fallback to global if not set)."""
         settings, _ = CompanyIntegrationSettings.objects.get_or_create(
             company=self.company
         )
@@ -47,7 +49,10 @@ class CourierGuyService:
         api_secret = self.credentials.get('api_secret')
         
         if not api_key or not api_secret:
-            raise ValueError(f"Courier Guy credentials not configured for company {self.company.name}")
+            raise ValueError(
+                f"Courier Guy credentials not configured for company {self.company.name}. "
+                f"Please configure company-specific credentials or set up global Courier Guy settings."
+            )
         
         # Courier Guy typically uses API key authentication
         # Adjust based on actual API documentation

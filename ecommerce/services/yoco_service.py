@@ -28,16 +28,18 @@ class YocoService:
         """
         Initialize Yoco service for a company.
         
+        Uses company-specific settings if available, otherwise falls back to global settings.
+        
         Args:
             company: EcommerceCompany instance
         """
         self.company = company
         self.integration_settings = self._get_integration_settings()
         self.credentials = self.integration_settings.get_yoco_credentials()
-        self.base_url = self.SANDBOX_BASE_URL if self.credentials['sandbox_mode'] else self.PRODUCTION_BASE_URL
+        self.base_url = self.SANDBOX_BASE_URL if self.credentials.get('sandbox_mode', True) else self.PRODUCTION_BASE_URL
     
     def _get_integration_settings(self) -> CompanyIntegrationSettings:
-        """Get or create integration settings for company."""
+        """Get or create integration settings for company (will fallback to global if not set)."""
         settings, _ = CompanyIntegrationSettings.objects.get_or_create(
             company=self.company
         )
@@ -47,7 +49,10 @@ class YocoService:
         """Get headers for Yoco API requests."""
         secret_key = self.credentials.get('secret_key')
         if not secret_key:
-            raise ValueError(f"Yoco secret key not configured for company {self.company.name}")
+            raise ValueError(
+                f"Yoco secret key not configured for company {self.company.name}. "
+                f"Please configure company-specific credentials or set up global Yoco settings."
+            )
         
         return {
             'Authorization': f'Bearer {secret_key}',
@@ -74,7 +79,10 @@ class YocoService:
             Dict with checkoutId and redirectUrl
         """
         if not self.credentials.get('secret_key'):
-            raise ValueError(f"Yoco secret key not configured for company {self.company.name}")
+            raise ValueError(
+                f"Yoco secret key not configured for company {self.company.name}. "
+                f"Please configure company-specific credentials or set up global Yoco settings."
+            )
         
         # Convert amount to cents (Yoco uses cents)
         amount_cents = int(float(order.total) * 100)

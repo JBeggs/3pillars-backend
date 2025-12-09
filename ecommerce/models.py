@@ -532,10 +532,152 @@ class Order(models.Model):
         return f"{self.company.name} - {self.order_number}"
 
 
+class GlobalIntegrationSettings(models.Model):
+    """
+    Global/system-wide integration settings for payment gateways and courier services.
+    These are used as fallback defaults when company-specific settings are not configured.
+    Only one instance should exist (singleton pattern).
+    """
+    PAYMENT_GATEWAY_CHOICES = [
+        ('yoco', 'Yoco'),
+        ('payfast', 'PayFast'),
+        ('paystack', 'PayStack'),
+        ('stripe', 'Stripe'),
+    ]
+    
+    COURIER_CHOICES = [
+        ('courier_guy', 'The Courier Guy'),
+        ('pudo', 'Pudo (via Courier Guy)'),
+        ('fastway', 'Fastway'),
+        ('postnet', 'PostNet'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Payment Gateway Settings
+    payment_gateway = models.CharField(
+        max_length=50,
+        choices=PAYMENT_GATEWAY_CHOICES,
+        default='yoco',
+        help_text='Default payment gateway'
+    )
+    
+    # Yoco Global Settings
+    yoco_secret_key = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Global Yoco secret key (fallback for companies without their own)'
+    )
+    yoco_public_key = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Global Yoco public key'
+    )
+    yoco_webhook_secret = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Global Yoco webhook secret'
+    )
+    yoco_sandbox_mode = models.BooleanField(
+        default=True,
+        help_text='Global Yoco sandbox/test mode setting'
+    )
+    
+    # Courier Guy Global Settings
+    courier_service = models.CharField(
+        max_length=50,
+        choices=COURIER_CHOICES,
+        default='courier_guy',
+        help_text='Default courier service'
+    )
+    courier_guy_api_key = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Global Courier Guy API key (fallback for companies without their own)'
+    )
+    courier_guy_api_secret = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Global Courier Guy API secret'
+    )
+    courier_guy_account_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text='Global Courier Guy account number'
+    )
+    courier_guy_sandbox_mode = models.BooleanField(
+        default=True,
+        help_text='Global Courier Guy sandbox/test mode setting'
+    )
+    
+    # Additional settings (JSON fields)
+    payment_gateway_settings = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Additional global payment gateway settings'
+    )
+    courier_settings = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Additional global courier service settings'
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _('Global Integration Settings')
+        verbose_name_plural = _('Global Integration Settings')
+    
+    def __str__(self):
+        return "Global Integration Settings"
+    
+    def save(self, *args, **kwargs):
+        """Ensure only one instance exists (singleton pattern)."""
+        self.pk = 1
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        """Prevent deletion of global settings."""
+        pass
+    
+    @classmethod
+    def get_global_settings(cls):
+        """Get or create the global settings instance."""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+    
+    def get_yoco_credentials(self):
+        """Get global Yoco credentials."""
+        return {
+            'secret_key': self.yoco_secret_key,
+            'public_key': self.yoco_public_key,
+            'webhook_secret': self.yoco_webhook_secret,
+            'sandbox_mode': self.yoco_sandbox_mode,
+        }
+    
+    def get_courier_guy_credentials(self):
+        """Get global Courier Guy credentials."""
+        return {
+            'api_key': self.courier_guy_api_key,
+            'api_secret': self.courier_guy_api_secret,
+            'account_number': self.courier_guy_account_number,
+            'sandbox_mode': self.courier_guy_sandbox_mode,
+        }
+
+
 class CompanyIntegrationSettings(models.Model):
     """
     Company-specific integration settings for payment gateways and courier services.
     Each company has their own API keys and credentials.
+    Falls back to GlobalIntegrationSettings if company-specific settings are not configured.
     """
     PAYMENT_GATEWAY_CHOICES = [
         ('yoco', 'Yoco'),
@@ -648,21 +790,35 @@ class CompanyIntegrationSettings(models.Model):
         return f"Integration Settings - {self.company.name}"
     
     def get_yoco_credentials(self):
-        """Get Yoco credentials for API calls."""
+        """
+        Get Yoco credentials for API calls.
+        Falls back to global settings if company-specific settings are not configured.
+        """
+        global_settings = GlobalIntegrationSettings.get_global_settings()
+        global_creds = global_settings.get_yoco_credentials()
+        
+        # Use company-specific settings if available, otherwise fallback to global
         return {
-            'secret_key': self.yoco_secret_key,
-            'public_key': self.yoco_public_key,
-            'webhook_secret': self.yoco_webhook_secret,
-            'sandbox_mode': self.yoco_sandbox_mode,
+            'secret_key': self.yoco_secret_key or global_creds.get('secret_key'),
+            'public_key': self.yoco_public_key or global_creds.get('public_key'),
+            'webhook_secret': self.yoco_webhook_secret or global_creds.get('webhook_secret'),
+            'sandbox_mode': self.yoco_sandbox_mode if self.yoco_secret_key else global_creds.get('sandbox_mode', True),
         }
     
     def get_courier_guy_credentials(self):
-        """Get Courier Guy credentials for API calls."""
+        """
+        Get Courier Guy credentials for API calls.
+        Falls back to global settings if company-specific settings are not configured.
+        """
+        global_settings = GlobalIntegrationSettings.get_global_settings()
+        global_creds = global_settings.get_courier_guy_credentials()
+        
+        # Use company-specific settings if available, otherwise fallback to global
         return {
-            'api_key': self.courier_guy_api_key,
-            'api_secret': self.courier_guy_api_secret,
-            'account_number': self.courier_guy_account_number,
-            'sandbox_mode': self.courier_guy_sandbox_mode,
+            'api_key': self.courier_guy_api_key or global_creds.get('api_key'),
+            'api_secret': self.courier_guy_api_secret or global_creds.get('api_secret'),
+            'account_number': self.courier_guy_account_number or global_creds.get('account_number'),
+            'sandbox_mode': self.courier_guy_sandbox_mode if self.courier_guy_api_key else global_creds.get('sandbox_mode', True),
         }
 
 

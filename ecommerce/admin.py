@@ -2,7 +2,8 @@ from django.contrib import admin
 from crm.site.crmadminsite import crm_site
 from .models import (
     EcommerceCompany, EcommerceProduct, Category, ProductImage,
-    Cart, CartItem, Order, OrderItem, CompanyIntegrationSettings
+    Cart, CartItem, Order, OrderItem, CompanyIntegrationSettings,
+    GlobalIntegrationSettings
 )
 
 
@@ -74,6 +75,57 @@ class OrderItemAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'created_at']
 
 
+@admin.register(GlobalIntegrationSettings)
+class GlobalIntegrationSettingsAdmin(admin.ModelAdmin):
+    """Admin interface for global integration settings (singleton)."""
+    
+    def has_add_permission(self, request):
+        """Only allow one instance."""
+        return not GlobalIntegrationSettings.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        """Prevent deletion of global settings."""
+        return False
+    
+    list_display = ['__str__', 'payment_gateway', 'courier_service', 'yoco_sandbox_mode', 'courier_guy_sandbox_mode', 'updated_at']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Payment Gateway', {
+            'fields': ('payment_gateway',)
+        }),
+        ('Global Yoco Settings', {
+            'description': 'These settings are used as fallback defaults for companies without their own Yoco credentials.',
+            'fields': (
+                'yoco_secret_key',
+                'yoco_public_key',
+                'yoco_webhook_secret',
+                'yoco_sandbox_mode',
+            ),
+        }),
+        ('Courier Service', {
+            'fields': ('courier_service',)
+        }),
+        ('Global Courier Guy Settings', {
+            'description': 'These settings are used as fallback defaults for companies without their own Courier Guy credentials.',
+            'fields': (
+                'courier_guy_api_key',
+                'courier_guy_api_secret',
+                'courier_guy_account_number',
+                'courier_guy_sandbox_mode',
+            ),
+        }),
+        ('Additional Settings', {
+            'fields': ('payment_gateway_settings', 'courier_settings'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
 @admin.register(CompanyIntegrationSettings)
 class CompanyIntegrationSettingsAdmin(admin.ModelAdmin):
     list_display = ['company', 'payment_gateway', 'courier_service', 'yoco_sandbox_mode', 'courier_guy_sandbox_mode', 'updated_at']
@@ -89,7 +141,8 @@ class CompanyIntegrationSettingsAdmin(admin.ModelAdmin):
         ('Payment Gateway', {
             'fields': ('payment_gateway',)
         }),
-        ('Yoco Settings', {
+        ('Yoco Settings (Override Global)', {
+            'description': 'Leave blank to use global Yoco settings. Fill in to override with company-specific credentials.',
             'fields': (
                 'yoco_secret_key',
                 'yoco_public_key',
@@ -101,7 +154,8 @@ class CompanyIntegrationSettingsAdmin(admin.ModelAdmin):
         ('Courier Service', {
             'fields': ('courier_service',)
         }),
-        ('Courier Guy Settings', {
+        ('Courier Guy Settings (Override Global)', {
+            'description': 'Leave blank to use global Courier Guy settings. Fill in to override with company-specific credentials.',
             'fields': (
                 'courier_guy_api_key',
                 'courier_guy_api_secret',
@@ -130,5 +184,6 @@ crm_site.register(Cart, CartAdmin)
 crm_site.register(CartItem, CartItemAdmin)
 crm_site.register(Order, OrderAdmin)
 crm_site.register(OrderItem, OrderItemAdmin)
+crm_site.register(GlobalIntegrationSettings, GlobalIntegrationSettingsAdmin)
 crm_site.register(CompanyIntegrationSettings, CompanyIntegrationSettingsAdmin)
 

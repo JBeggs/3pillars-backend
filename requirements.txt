@@ -63,7 +63,7 @@ dj-database-url==2.1.0
 gunicorn==21.2.0
 
 # Static Files (for local development and non-PythonAnywhere deployments)
-whitenoise==6.6.0  # PythonAnywhere serves static files, but needed for local dev
+whitenoise==6.11.0  # PythonAnywhere serves static files, but needed for local dev
 
 # Optional: For Yoco Payment Gateway Integration
 # yoco-python==1.0.0  # Uncomment when Yoco Python SDK is available
